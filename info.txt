@@ -1,0 +1,6 @@
+this is a fork of the original AssaultCube 1.2.0.2: 
+    https://github.com/assaultcube/AC/tree/97e781f03aa7ef581311c6da7e2faf3de986aad9.
+
+I AM IN NO WAY:
+    the owner of the original AssaultCube, Cube Engine, textures, sounds, models, maps, mods or any other created content unless otherwise stated
+    a professional programmer so i may make code that is not the best :-)
