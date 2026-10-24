@@ -1,0 +1,14 @@
+*.gch
+*.pch
+*.so
+*.dll
+*.a
+*.lib
+*.exe
+*.out
+*.o
+*.elf
+build/*
+bin/*
+.vs/*
+.vscode/*
