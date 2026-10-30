@@ -22,22 +22,22 @@ VAR(showmodelclipping, 0, 0, 1);
 vector<entity> ents;
 vector<int> eh_ents; // edithide entities
 const char *entmdlnames[] =
- {
-     "pistolclips", "ammobox", "nade", "health", "helmet", "kevlar", "akimbo", "nades", //FIXME
- };
+{
+    "pistolclips", "ammobox", "nade", "health", "helmet", "kevlar", "akimbo", "nades", //FIXME
+};
 
- void renderent(entity &e)
- {
-     /* FIXME: if the item list change, this hack will be messed */
+void renderent(entity &e)
+{
+    /* FIXME: if the item list change, this hack will be messed */
 
-     defformatstring(widn)("modmdlpickup%d", e.type-3);
-     defformatstring(mdlname)("pickups/%s", identexists(widn)?getalias(widn):
+    defformatstring(widn)("modmdlpickup%d", e.type-3);
+    defformatstring(mdlname)("pickups/%s", identexists(widn)?getalias(widn):
 
-     entmdlnames[e.type-I_CLIPS+(m_lss && e.type==I_GRENADE ? 5:0)]);
+    entmdlnames[e.type-I_CLIPS+(m_lss && e.type==I_GRENADE ? 5:0)]);
 
-     float z = (float)(1+sinf(lastmillis/100.0f+e.x+e.y)/20), yaw = lastmillis/10.0f;
-     rendermodel(mdlname, ANIM_MAPMODEL|ANIM_LOOP|ANIM_DYNALLOC, 0, 0, vec(e.x, e.y, z+S(e.x, e.y)->floor+e.attr1), yaw, 0);
- }
+    float z = (float)(1+sinf(lastmillis/100.0f+e.x+e.y)/20), yaw = lastmillis/10.0f;
+    rendermodel(mdlname, ANIM_MAPMODEL|ANIM_LOOP|ANIM_DYNALLOC, 0, 0, vec(e.x, e.y, z+S(e.x, e.y)->floor+e.attr1), yaw, 0);
+}
 
 void renderclip(entity &e)
 {

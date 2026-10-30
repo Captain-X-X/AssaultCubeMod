@@ -130,7 +130,7 @@ COMMAND(mapmodelreset, "");
 hashtable<const char *, model *> mdllookup;
 model *nomodel = NULL;
 
-model *loadmodel(const char *name, int i, bool trydl)
+model *loadmodel(const char *name, int i)
 {
     if(!name)
     {
@@ -156,30 +156,30 @@ model *loadmodel(const char *name, int i, bool trydl)
             {
                 delete m;
                 loadingmodel = NULL;
-                if(trydl)
-                {
-                    defformatstring(dl)("packages/models/%s", name);
-                    requirepackage(PCK_MAPMODEL, dl);
-                }
-                else
-                {
-                    mdllookup.access(newstring(name), nomodel);
-                    conoutf("\f3failed to load model %s", name);
-                }
+                // if(trydl)
+                // {
+                //     defformatstring(dl)("packages/models/%s", name);
+                //     requirepackage(PCK_MAPMODEL, dl);
+                // }
+                // else
+                // {
+                // }
+                mdllookup.access(newstring(name), nomodel);
+                conoutf("\f3failed to load model %s", name);
             }
         }
         popscontext();
-        if(!loadingmodel)
-        {
-            if(!trydl)
-            {
-                conoutf(_("failed to load model %s"), name);
-                if(!nomodel) nomodel = new md2("nomodel");
-                m = nomodel;
-                mdllookup.access(newstring(name), m);
-            }
-        }
-        else mdllookup.access(m->name(), m);
+        // if(!loadingmodel)
+        // {
+        //     if(!trydl)
+        //     {
+        //         conoutf(_("failed to load model %s"), name);
+        //         if(!nomodel) nomodel = new md2("nomodel");
+        //         m = nomodel;
+        //         mdllookup.access(newstring(name), m);
+        //     }
+        // }
+        mdllookup.access(m->name(), m);
         loadingmodel = NULL;
     }
     if(m == nomodel) return NULL;
@@ -583,14 +583,14 @@ void preload_entmodels()
      }
 }
 
-void preload_mapmodels(bool trydl)
+void preload_mapmodels()
 {
     loopv(ents)
     {
         entity &e = ents[i];
         if(e.type!=MAPMODEL || !mapmodels.inrange(e.attr2)) continue;
-        loadmodel(NULL, e.attr2, trydl);
-        if(e.attr4) lookuptexture(e.attr4, notexture, trydl);
+        loadmodel(NULL, e.attr2);
+        if(e.attr4) lookuptexture(e.attr4, notexture);
     }
 }
 

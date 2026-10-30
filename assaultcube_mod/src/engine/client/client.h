@@ -74,6 +74,13 @@ void connectserv(char *, int *, char *);
 void writeinitcfg();
 
 // client NET stuff
+// extern int autodownload;
+// void setupcurl();
+// bool requirepackage(int type, const char *path);
+// int downloadpackages();
+// void sortpckservers();
+// void writepcksourcecfg();
+
 void abortconnect();
 void disconnect(int onlyclean = 0, int async = 0);
 void cleanupclient();

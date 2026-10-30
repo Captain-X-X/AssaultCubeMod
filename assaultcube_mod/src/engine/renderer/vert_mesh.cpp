@@ -399,7 +399,7 @@ void mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
     loopi(numdyndraws)
     {
         const drawcall &d = dyndraws[i];
-        if(hasDRE && !builddlist) glDrawRangeElements_(d.type, d.minvert, d.maxvert, d.count, GL_UNSIGNED_SHORT, &dynidx[d.start]);
+        if(hasDRE && !builddlist) glDrawRangeElements(d.type, d.minvert, d.maxvert, d.count, GL_UNSIGNED_SHORT, &dynidx[d.start]);
         else glDrawElements(d.type, d.count, GL_UNSIGNED_SHORT, &dynidx[d.start]);
     }
     if(builddlist)

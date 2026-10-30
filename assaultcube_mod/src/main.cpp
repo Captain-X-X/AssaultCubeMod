@@ -276,9 +276,6 @@ int main(int argc, char **argv)
     preload_playermodels();
     preload_hudguns();
 
-    initlog("curl");
-    setupcurl();
-
     preload_entmodels();
 
     initlog("docs");
@@ -298,9 +295,6 @@ int main(int argc, char **argv)
     }
 
     gamestarts = max(1, gamestarts + 1);
-    if (autodownload && (gamestarts % 100 == 1)) {
-        sortpckservers();
-    }
 
     initlog("mainloop");
 

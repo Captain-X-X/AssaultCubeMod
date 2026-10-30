@@ -21,7 +21,7 @@ add_compile_options(
 find_package(OpenGL REQUIRED)
 find_package(OpenAL REQUIRED)
 find_package(SDL REQUIRED)
-find_package(CURL REQUIRED)
+#find_package(CURL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(SDL_IMAGE REQUIRED SDL_image)
@@ -73,7 +73,7 @@ target_link_libraries(native_client PRIVATE
     OpenGL::GL
     ${SDL_LIBRARY}
     OpenAL::OpenAL
-    CURL::libcurl
+    #CURL::libcurl
     ${SDL_IMAGE_LIBRARIES}
     ${VORBIS_LIBRARIES}
     enet

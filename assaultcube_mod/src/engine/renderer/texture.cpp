@@ -356,7 +356,7 @@ bool silent_texture_load = false;
 VARFP(hirestextures, 0, 1, 1, initwarning("texture resolution", INIT_LOAD));
 bool uniformtexres = !hirestextures;
 
-GLuint loadsurface(const char *texname, int &xs, int &ys, int &bpp, int clamp = 0, bool mipmap = true, bool canreduce = false, float scale = 1.0f, bool trydl = false)
+GLuint loadsurface(const char *texname, int &xs, int &ys, int &bpp, int clamp = 0, bool mipmap = true, bool canreduce = false, float scale = 1.0f)
 {
     const char *file = texname;
     if(texname[0]=='<')
@@ -379,13 +379,13 @@ GLuint loadsurface(const char *texname, int &xs, int &ys, int &bpp, int clamp = 
         delete z;
     }
     if(!s) s = IMG_Load(findfile(file, "rb"));
-    if(!s)
-    {
-        if(trydl)
-            requirepackage(PCK_TEXTURE, file);
-        else if(!silent_texture_load) conoutf("couldn't load texture %s", texname);
-        return 0;
-    }
+    // if(!s)
+    // {
+    //     if(trydl)
+    //         requirepackage(PCK_TEXTURE, file);
+    //     else if(!silent_texture_load) conoutf("couldn't load texture %s", texname);
+    //     return 0;
+    // }
     s = fixsurfaceformat(s);
     Uint8 x = 0;
     if(strstr(texname,"playermodel") && (x = fixcl(s)) > 35) { fixcl(s,false,x,35); }
@@ -428,7 +428,7 @@ GLuint loadsurface(const char *texname, int &xs, int &ys, int &bpp, int clamp = 
 // each texture slot can have multiple texture frames, of which currently only the first is used
 // additional frames can be used for various shaders
 
-Texture *textureload(const char *name, int clamp, bool mipmap, bool canreduce, float scale, bool trydl)
+Texture *textureload(const char *name, int clamp, bool mipmap, bool canreduce, float scale)
 {
     string pname;
     copystring(pname, name);
@@ -436,7 +436,7 @@ Texture *textureload(const char *name, int clamp, bool mipmap, bool canreduce, f
     Texture *t = textures.access(pname);
     if(t) return t;
     int xs, ys, bpp;
-    GLuint id = loadsurface(pname, xs, ys, bpp, clamp, mipmap, canreduce, scale, trydl);
+    GLuint id = loadsurface(pname, xs, ys, bpp, clamp, mipmap, canreduce, scale);
     if(!id) return notexture;
     char *key = newstring(pname);
     t = &textures[key];
@@ -505,7 +505,7 @@ void texture(float *scale, char *name)
 COMMAND(texturereset, "");
 COMMAND(texture, "fs");
 
-Texture *lookuptexture(int tex, Texture *failtex, bool trydl)
+Texture *lookuptexture(int tex, Texture *failtex)
 {
     Texture *t = failtex;
     if(slots.inrange(tex))
@@ -514,12 +514,12 @@ Texture *lookuptexture(int tex, Texture *failtex, bool trydl)
         if(!s.loaded)
         {
             defformatstring(pname)("packages/textures/%s", s.name);
-            s.tex = textureload(pname, 0, true, true, s.scale, trydl);
-            if(!trydl)
-            {
-            if(s.tex==notexture) s.tex = failtex;
-            s.loaded = true;
-        }
+            s.tex = textureload(pname, 0, true, true, s.scale);
+            //if(!trydl)
+            //{
+            //     if(s.tex==notexture) s.tex = failtex;
+            //     s.loaded = true;
+            // }
         }
         if(s.tex) t = s.tex;
     }
@@ -568,12 +568,12 @@ void loadsky(char *basename, bool reload)
     {
         defformatstring(name)("packages/%s_%s.jpg", basename, side[i]);
         sky[i] = textureload(name, 3);
-        if(sky[i] == notexture && !reload && autodownload)
-        {
-            defformatstring(dl)("packages/%s", basename);
-            requirepackage(PCK_SKYBOX, dl);
-            break;
-        }
+        // if(sky[i] == notexture && !reload && autodownload)
+        // {
+        //     defformatstring(dl)("packages/%s", basename);
+        //     requirepackage(PCK_SKYBOX, dl);
+        //     break;
+        // }
     }
 }
 
@@ -796,10 +796,10 @@ void inittmus()
         maxtmus = max(1, min(MAXTMUS, int(val)));
         loopi(maxtmus)
         {
-            glActiveTexture_(GL_TEXTURE0_ARB+i);
+            glActiveTexture(GL_TEXTURE0_ARB+i);
             resettmu(i);
         }
-        glActiveTexture_(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0_ARB);
     }
 }
 

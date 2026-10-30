@@ -1,17 +1,40 @@
 #ifndef WEAPON_H
 #define WEAPON_H
+#include "entityinfo.h"
+#include "tools/cube_string.h"
+#include "maths/vector_maths.h"
+
 class playerent;
 class bounceent;
 
-struct weapon
+struct guninfo
 {
+    string modelname;
+    short sound, reload, reloadtime, attackdelay, damage, piercing, projspeed, part, spread, recoil, magsize, mdl_kick_rot, mdl_kick_back, recoilincrease, recoilbase, maxrecoil, recoilbackfade, pushfactor;
+    bool isauto;
+};
+extern guninfo guns[NUMGUNS];
+
+static inline int reloadtime(int gun) 
+{ 
+    return guns[gun].reloadtime; 
+}
+
+static inline int attackdelay(int gun) 
+{ 
+    return guns[gun].attackdelay; 
+}
+
+static inline int magsize(int gun) 
+{ 
+    return guns[gun].magsize; 
+}
+
+class weapon
+{
+public:
     const static int weaponchangetime;
     const static float weaponbeloweye;
-    static void equipplayer(playerent *pl);
-
-    weapon(class playerent *owner, int type);
-    virtual ~weapon() {}
-
     int type;
     playerent *owner;
     const struct guninfo &info;
@@ -19,6 +42,11 @@ struct weapon
     virtual int dynspread();
     virtual float dynrecoil();
     int reloading, lastaction;
+    static void equipplayer(playerent *pl);
+
+public:
+    weapon(class playerent *owner, int type);
+    virtual ~weapon() {}
 
     virtual bool attack(vec &targ) = 0;
     virtual void attackfx(const vec &from, const vec &to, int millis) = 0;

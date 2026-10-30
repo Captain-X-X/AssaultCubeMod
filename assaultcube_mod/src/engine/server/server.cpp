@@ -15,6 +15,7 @@
 #include "signal.h"
 #include "client/clientgame.h"
 #include "editing.h"
+#include "weapon.h"
 
 const char *messagenames[SV_NUM] =
 {

@@ -25,31 +25,6 @@ extern int mapdims[8];
 
 bool hasTE = false, hasMT = false, hasMDA = false, hasDRE = false, hasstencil = false, hasST2 = false, hasSTW = false, hasSTS = false, hasAF;
 
-// GL_ARB_multitexture
-PFNGLACTIVETEXTUREARBPROC       glActiveTexture_   = NULL;
-PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_ = NULL;
-PFNGLMULTITEXCOORD2FARBPROC     glMultiTexCoord2f_ = NULL;
-PFNGLMULTITEXCOORD3FARBPROC     glMultiTexCoord3f_ = NULL;
-
-// GL_EXT_multi_draw_arrays
-PFNGLMULTIDRAWARRAYSEXTPROC   glMultiDrawArrays_ = NULL;
-PFNGLMULTIDRAWELEMENTSEXTPROC glMultiDrawElements_ = NULL;
-
-// GL_EXT_draw_range_elements
-PFNGLDRAWRANGEELEMENTSEXTPROC glDrawRangeElements_ = NULL;
-
-// GL_EXT_stencil_two_side
-PFNGLACTIVESTENCILFACEEXTPROC glActiveStencilFace_ = NULL;
-
-// GL_ATI_separate_stencil
-PFNGLSTENCILOPSEPARATEATIPROC   glStencilOpSeparate_ = NULL;
-PFNGLSTENCILFUNCSEPARATEATIPROC glStencilFuncSeparate_ = NULL;
-
-void *getprocaddress(const char *name)
-{
-    return SDL_GL_GetProcAddress(name);
-}
-
 bool hasext(const char *exts, const char *ext)
 {
     int len = strlen(ext);
@@ -59,13 +34,6 @@ bool hasext(const char *exts, const char *ext)
     }
     return false;
 }
-
-void glext(char *ext)
-{
-    const char *exts = (const char *)glGetString(GL_EXTENSIONS);
-    intret(hasext(exts, ext) ? 1 : 0);
-}
-COMMAND(glext, "s");
 
 VAR(ati_mda_bug, 0, 0, 1);
 
@@ -78,89 +46,66 @@ void gl_checkextensions()
     conoutf("Renderer: %s (%s)", renderer, vendor);
     conoutf("Driver: %s", version);
 
-    if(hasext(exts, "GL_EXT_texture_env_combine") || hasext(exts, "GL_ARB_texture_env_combine")) hasTE = true;
-    else conoutf("WARNING: cannot use overbright lighting, using old lighting model!");
+    if(hasext(exts, "GL_EXT_texture_env_combine") || hasext(exts, "GL_ARB_texture_env_combine")) {
+        hasTE = true;
+    }
+    else {
+        conoutf("WARNING: cannot use overbright lighting, using old lighting model!");
+    } 
 
-    if(hasext(exts, "GL_ARB_multitexture"))
-    {
-        glActiveTexture_       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
-        glClientActiveTexture_ = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
-        glMultiTexCoord2f_     = (PFNGLMULTITEXCOORD2FARBPROC)    getprocaddress("glMultiTexCoord2fARB");
-        glMultiTexCoord3f_     = (PFNGLMULTITEXCOORD3FARBPROC)    getprocaddress("glMultiTexCoord3fARB");
+    if(hasext(exts, "GL_ARB_multitexture")) {
         hasMT = true;
     }
 
-    if(hasext(exts, "GL_EXT_multi_draw_arrays"))
-    {
-        glMultiDrawArrays_   = (PFNGLMULTIDRAWARRAYSEXTPROC)  getprocaddress("glMultiDrawArraysEXT");
-        glMultiDrawElements_ = (PFNGLMULTIDRAWELEMENTSEXTPROC)getprocaddress("glMultiDrawElementsEXT");
+    if(hasext(exts, "GL_EXT_multi_draw_arrays")) {
         hasMDA = true;
-
-        if(strstr(vendor, "ATI")) ati_mda_bug = 1;
+        if(strstr(vendor, "ATI")) {
+            ati_mda_bug = 1;
+        }
     }
 
-    if(hasext(exts, "GL_EXT_draw_range_elements"))
-    {
-        glDrawRangeElements_ = (PFNGLDRAWRANGEELEMENTSEXTPROC)getprocaddress("glDrawRangeElementsEXT");
+    if(hasext(exts, "GL_EXT_draw_range_elements")) {
         hasDRE = true;
     }
 
-    if(hasext(exts, "GL_EXT_stencil_two_side"))
-    {
-        glActiveStencilFace_ = (PFNGLACTIVESTENCILFACEEXTPROC)getprocaddress("glActiveStencilFaceEXT");
+    if(hasext(exts, "GL_EXT_stencil_two_side")) {
         hasST2 = true;
     }
 
-    if(hasext(exts, "GL_ATI_separate_stencil"))
-    {
-        glStencilOpSeparate_   = (PFNGLSTENCILOPSEPARATEATIPROC)  getprocaddress("glStencilOpSeparateATI");
-        glStencilFuncSeparate_ = (PFNGLSTENCILFUNCSEPARATEATIPROC)getprocaddress("glStencilFuncSeparateATI");
+    if(hasext(exts, "GL_ATI_separate_stencil")) {
         hasSTS = true;
     }
 
-    if(hasext(exts, "GL_EXT_stencil_wrap")) hasSTW = true;
+    if(hasext(exts, "GL_EXT_stencil_wrap")) {
+        hasSTW = true;
+    }
 
-    if(hasext(exts, "GL_EXT_texture_filter_anisotropic"))
-    {
+    if(hasext(exts, "GL_EXT_texture_filter_anisotropic")) {
        GLint val;
        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &val);
        hwmaxaniso = val;
        hasAF = true;
     }
 
-    if(!hasext(exts, "GL_ARB_fragment_program"))
-    {
+    if(!hasext(exts, "GL_ARB_fragment_program")) {
         // not a required extension, but ensures the card has enough power to do reflections
         extern int waterreflect, waterrefract;
         waterreflect = waterrefract = 0;
     }
-
-#ifdef WIN32
-    if(strstr(vendor, "S3 Graphics"))
-    {
-        // official UniChrome drivers can't handle glDrawElements inside a display list without bugs
-        extern int mdldlist;
-        mdldlist = 0;
-    }
-#endif
 }
 
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
 {
-    //#define fogvalues 0.5f, 0.6f, 0.7f, 1.0f
-
     glViewport(0, 0, w, h);
     glClearDepth(1.0);
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
 
-
     glEnable(GL_FOG);
     glFogi(GL_FOG_MODE, GL_LINEAR);
     glFogf(GL_FOG_DENSITY, 0.25);
     glHint(GL_FOG_HINT, GL_NICEST);
-
 
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
@@ -169,7 +114,6 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     glEnable(GL_CULL_FACE);
 
     inittmus();
-
     resetcamera();
 }
 
@@ -179,8 +123,7 @@ FVAR(depthoffset, -1e4f, 0.005f, 1e4f);
 
 void enablepolygonoffset(GLenum type)
 {
-    if(!depthoffset)
-    {
+    if(!depthoffset) {
         glPolygonOffset(polygonoffsetfactor, polygonoffsetunits);
         glEnable(type);
         return;
@@ -234,7 +177,6 @@ void line(int x1, int y1, int x2, int y2, color *c)
     glEnd();
     glEnable(GL_BLEND);
 }
-
 
 void linestyle(float width, int r, int g, int b)
 {

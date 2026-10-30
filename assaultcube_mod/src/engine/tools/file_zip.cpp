@@ -139,27 +139,27 @@ static bool checkprefix(vector<ZipArch::zipfile> &files, const char *prefix, int
 
 bool extractzipfile(ZipArch::ziparchive *a, ZipArch::zipfile *f, const char *name);
 
-bool fitspackage(char *filename, int type)
-{
-    char *extension = strrchr(filename, '.');
-    ++extension;
-    switch(type)
-    {
-        case PCK_MAPMODEL:  return !strcmp(extension, "md2") || !strcmp(extension, "md3")
-                               || !strcmp(extension, "cfg") || !strcmp(extension, "txt")
-                               || !strcmp(extension, "jpg") || !strcmp(extension, "png");
-        case PCK_MAP:       return !strcmp(extension, "cgz") || !strcmp(extension, "cfg");
-        case PCK_SKYBOX:    return !strcmp(extension, "jpg") || !strcmp(extension, "png");
-        default:            return true;
-    }
-}
+// bool fitspackage(char *filename, int type)
+// {
+//     char *extension = strrchr(filename, '.');
+//     ++extension;
+//     switch(type)
+//     {
+//         case PCK_MAPMODEL:  return !strcmp(extension, "md2") || !strcmp(extension, "md3")
+//                                || !strcmp(extension, "cfg") || !strcmp(extension, "txt")
+//                                || !strcmp(extension, "jpg") || !strcmp(extension, "png");
+//         case PCK_MAP:       return !strcmp(extension, "cgz") || !strcmp(extension, "cfg");
+//         case PCK_SKYBOX:    return !strcmp(extension, "jpg") || !strcmp(extension, "png");
+//         default:            return true;
+//     }
+// }
 
 static void mountzip(ZipArch::ziparchive &arch, vector<ZipArch::zipfile> &files, const char *mountdir, const char *stripdir, bool extract)
 {
     string packagesdir = "packages/";
     path(packagesdir);
     int striplen = stripdir ? (int)strlen(stripdir) : 0;
-    if(arch.type == PCK_MAP) mountdir = "packages/maps/";
+    // if(arch.type == PCK_MAP) mountdir = "packages/maps/";
     if(!mountdir && !stripdir) {
         for (int i = 0; i < files.length(); i++) {
             ZipArch::zipfile &f = files[i];
@@ -209,8 +209,8 @@ static void mountzip(ZipArch::ziparchive &arch, vector<ZipArch::zipfile> &files,
 
         if(extract)
         {
-            if(fitspackage(fname, arch.type)) extractzipfile(&arch, &f, fname);
-            else conoutf("\f3could not extract \"%s\" : file extension not supported", fname);
+            // if(fitspackage(fname, arch.type)) extractzipfile(&arch, &f, fname);
+            // else conoutf("\f3could not extract \"%s\" : file extension not supported", fname);
         }
     }
 }

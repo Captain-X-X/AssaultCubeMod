@@ -24,6 +24,7 @@ using namespace Maths;
 #include "sound/sound.h"
 #include "weapon.h"
 #include "entity.h"
+#include "player.h"
 #include "world.h"
 #include "command.h"
 

@@ -36,7 +36,6 @@
 #endif
 
 #include <zlib.h>
-// #include "lib/enet/enet.h"
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -51,15 +50,11 @@
 #define ZLIB_DLL
 #endif
 
-#ifndef STANDALONE
 #include "lib/sdl/SDL.h"
 #include "lib/sdl/SDL_image.h"
 #include "lib/sdl/SDL_thread.h"
 
 #include "lib/glad/glad.h"
-#define GL_GLEXT_LEGACY
-#define __glext_h__
-#define NO_SDL_GLEXT
 #include "lib/sdl/SDL_opengl.h"
 
 #ifdef __APPLE__
@@ -75,13 +70,6 @@
 #endif
 
 #include <setjmp.h>
-
-#ifndef CURL_STATICLIB
-#define CURL_STATICLIB
-#endif
-#include "lib/curl/curl.h"
-
-#endif
 
 // local types
 #include "maths/maths_func.h"

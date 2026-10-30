@@ -1,8 +1,16 @@
 #include "cube.h"
 #include "modelcache.h"
 
-modelcache::modelcache(size_t size) : buf(size ? new uchar[size] : NULL), size(size), curalloc(NULL) {}
-modelcache::~modelcache() { DELETEA(buf); }
+modelcache::modelcache(size_t size) 
+    : buf(size ? new uchar[size] : NULL), size(size), curalloc(NULL) 
+{
+
+}
+
+modelcache::~modelcache() 
+{ 
+    DELETEA(buf); 
+}
 
 void modelcache::resize(size_t nsize)
 {
