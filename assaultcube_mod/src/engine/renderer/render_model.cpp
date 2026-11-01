@@ -10,7 +10,7 @@ model *loadingmodel = NULL;
 
 #include "tristrip.h"
 #include "modelcache.h"
-#include "vert_model.h"
+#include "model.h"
 #include "md2.h"
 #include "md3.h"
 #include "shadow.h"

@@ -11,27 +11,11 @@ struct color
 };
 
 extern bool hasTE, hasMT, hasMDA, hasDRE, hasstencil, hasST2, hasSTW, hasSTS, hasAF;
+extern float cursordepth;
+extern mat4_t mvmatrix, projmatrix, mvpmatrix, invmvmatrix, invmvpmatrix;
+extern vec3_t worldpos, camdir, camup, camright;
+extern mat4_t clipmatrix;
 
-// GL_ARB_multitexture
-extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture_;
-extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_;
-extern PFNGLMULTITEXCOORD2FARBPROC     glMultiTexCoord2f_;
-extern PFNGLMULTITEXCOORD3FARBPROC     glMultiTexCoord3f_;
-
-// GL_EXT_multi_draw_arrays
-extern PFNGLMULTIDRAWARRAYSEXTPROC   glMultiDrawArrays_;
-extern PFNGLMULTIDRAWELEMENTSEXTPROC glMultiDrawElements_;
-
-// GL_EXT_draw_range_elements
-extern PFNGLDRAWRANGEELEMENTSEXTPROC glDrawRangeElements_;
-
-// GL_EXT_stencil_two_side
-extern PFNGLACTIVESTENCILFACEEXTPROC glActiveStencilFace_;
-
-// GL_ATI_separate_stencil
-extern PFNGLSTENCILOPSEPARATEATIPROC   glStencilOpSeparate_;
-extern PFNGLSTENCILFUNCSEPARATEATIPROC glStencilFuncSeparate_;
-extern glmatrixf mvmatrix, projmatrix, clipmatrix, mvpmatrix, invmvmatrix, invmvpmatrix;
 void resetcamera();
 
 void gl_checkextensions();

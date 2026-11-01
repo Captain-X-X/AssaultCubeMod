@@ -25,31 +25,6 @@ extern int mapdims[8];
 
 bool hasTE = false, hasMT = false, hasMDA = false, hasDRE = false, hasstencil = false, hasST2 = false, hasSTW = false, hasSTS = false, hasAF;
 
-// GL_ARB_multitexture
-PFNGLACTIVETEXTUREARBPROC       glActiveTexture_   = NULL;
-PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_ = NULL;
-PFNGLMULTITEXCOORD2FARBPROC     glMultiTexCoord2f_ = NULL;
-PFNGLMULTITEXCOORD3FARBPROC     glMultiTexCoord3f_ = NULL;
-
-// GL_EXT_multi_draw_arrays
-PFNGLMULTIDRAWARRAYSEXTPROC   glMultiDrawArrays_ = NULL;
-PFNGLMULTIDRAWELEMENTSEXTPROC glMultiDrawElements_ = NULL;
-
-// GL_EXT_draw_range_elements
-PFNGLDRAWRANGEELEMENTSEXTPROC glDrawRangeElements_ = NULL;
-
-// GL_EXT_stencil_two_side
-PFNGLACTIVESTENCILFACEEXTPROC glActiveStencilFace_ = NULL;
-
-// GL_ATI_separate_stencil
-PFNGLSTENCILOPSEPARATEATIPROC   glStencilOpSeparate_ = NULL;
-PFNGLSTENCILFUNCSEPARATEATIPROC glStencilFuncSeparate_ = NULL;
-
-void *getprocaddress(const char *name)
-{
-    return SDL_GL_GetProcAddress(name);
-}
-
 bool hasext(const char *exts, const char *ext)
 {
     int len = strlen(ext);
@@ -81,47 +56,31 @@ void gl_checkextensions()
     if(hasext(exts, "GL_EXT_texture_env_combine") || hasext(exts, "GL_ARB_texture_env_combine")) hasTE = true;
     else conoutf("WARNING: cannot use overbright lighting, using old lighting model!");
 
-    if(hasext(exts, "GL_ARB_multitexture"))
-    {
-        glActiveTexture_       = (PFNGLACTIVETEXTUREARBPROC)      getprocaddress("glActiveTextureARB");
-        glClientActiveTexture_ = (PFNGLCLIENTACTIVETEXTUREARBPROC)getprocaddress("glClientActiveTextureARB");
-        glMultiTexCoord2f_     = (PFNGLMULTITEXCOORD2FARBPROC)    getprocaddress("glMultiTexCoord2fARB");
-        glMultiTexCoord3f_     = (PFNGLMULTITEXCOORD3FARBPROC)    getprocaddress("glMultiTexCoord3fARB");
+    if(hasext(exts, "GL_ARB_multitexture")) {
         hasMT = true;
     }
 
-    if(hasext(exts, "GL_EXT_multi_draw_arrays"))
-    {
-        glMultiDrawArrays_   = (PFNGLMULTIDRAWARRAYSEXTPROC)  getprocaddress("glMultiDrawArraysEXT");
-        glMultiDrawElements_ = (PFNGLMULTIDRAWELEMENTSEXTPROC)getprocaddress("glMultiDrawElementsEXT");
+    if(hasext(exts, "GL_EXT_multi_draw_arrays")) {
         hasMDA = true;
 
         if(strstr(vendor, "ATI")) ati_mda_bug = 1;
     }
 
-    if(hasext(exts, "GL_EXT_draw_range_elements"))
-    {
-        glDrawRangeElements_ = (PFNGLDRAWRANGEELEMENTSEXTPROC)getprocaddress("glDrawRangeElementsEXT");
+    if(hasext(exts, "GL_EXT_draw_range_elements")) {
         hasDRE = true;
     }
 
-    if(hasext(exts, "GL_EXT_stencil_two_side"))
-    {
-        glActiveStencilFace_ = (PFNGLACTIVESTENCILFACEEXTPROC)getprocaddress("glActiveStencilFaceEXT");
+    if(hasext(exts, "GL_EXT_stencil_two_side")) {
         hasST2 = true;
     }
 
-    if(hasext(exts, "GL_ATI_separate_stencil"))
-    {
-        glStencilOpSeparate_   = (PFNGLSTENCILOPSEPARATEATIPROC)  getprocaddress("glStencilOpSeparateATI");
-        glStencilFuncSeparate_ = (PFNGLSTENCILFUNCSEPARATEATIPROC)getprocaddress("glStencilFuncSeparateATI");
+    if(hasext(exts, "GL_ATI_separate_stencil")) {
         hasSTS = true;
     }
 
     if(hasext(exts, "GL_EXT_stencil_wrap")) hasSTW = true;
 
-    if(hasext(exts, "GL_EXT_texture_filter_anisotropic"))
-    {
+    if(hasext(exts, "GL_EXT_texture_filter_anisotropic")) {
        GLint val;
        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &val);
        hwmaxaniso = val;
@@ -134,15 +93,6 @@ void gl_checkextensions()
         extern int waterreflect, waterrefract;
         waterreflect = waterrefract = 0;
     }
-
-#ifdef WIN32
-    if(strstr(vendor, "S3 Graphics"))
-    {
-        // official UniChrome drivers can't handle glDrawElements inside a display list without bugs
-        extern int mdldlist;
-        mdldlist = 0;
-    }
-#endif
 }
 
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
@@ -186,7 +136,7 @@ void enablepolygonoffset(GLenum type)
         return;
     }
 
-    glmatrixf offsetmatrix = reflecting ? clipmatrix : projmatrix;
+    mat4_t offsetmatrix = reflecting ? clipmatrix : projmatrix;
     offsetmatrix[14] += depthoffset * projmatrix[10];
 
     glMatrixMode(GL_PROJECTION);
@@ -268,7 +218,7 @@ void quad(GLuint tex, float x, float y, float s, float tx, float ty, float tsx, 
     xtraverts += 4;
 }
 
-void quad(GLuint tex, const vec &c1, const vec &c2, float tx, float ty, float tsx, float tsy)
+void quad(GLuint tex, const vec3_t& c1, const vec3_t& c2, float tx, float ty, float tsx, float tsy)
 {
     if(!tsy) tsy = tsx;
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -601,7 +551,7 @@ void transplayer()
     glTranslatef(-camera1->o.x, -camera1->o.y, -camera1->o.z);
 }
 
-glmatrixf clipmatrix;
+mat4_t clipmatrix;
 
 void genclipmatrix(float a, float b, float c, float d)
 {
@@ -972,8 +922,8 @@ bool outsidemap(physent *pl)
 }
 
 float cursordepth = 0.9f;
-glmatrixf mvmatrix, projmatrix, mvpmatrix, invmvmatrix, invmvpmatrix;
-vec worldpos, camdir, camup, camright;
+mat4_t mvmatrix, projmatrix, mvpmatrix, invmvmatrix, invmvpmatrix;
+vec3_t worldpos, camdir, camup, camright;
 
 void readmatrices()
 {
@@ -1001,10 +951,10 @@ float depthcorrect(float d)
 // also hits map entities which is unwanted.
 // could be replaced by a more acurate version of monster.cpp los() if needed
 
-void readdepth(int w, int h, vec &pos)
+void readdepth(int w, int h, vec3_t& pos)
 {
     glReadPixels(w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
-    vec screen(0, 0, depthcorrect(cursordepth)*2 - 1);
+    vec3_t screen(0, 0, depthcorrect(cursordepth)*2 - 1);
     vec4 world;
     invmvpmatrix.transform(screen, world);
     pos = vec(world.x, world.y, world.z).div(world.w);

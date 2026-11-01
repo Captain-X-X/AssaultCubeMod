@@ -1,11 +1,11 @@
 #ifndef CMEMD2MDL_H
 #define CMEMD2MDL_H
 #include "cube.h"
-#include "vert_model.h"
+#include "model.h"
 
 struct modelattach;
 class dynent;
-struct md2 : vertmodel
+struct md2 : model
 {
     md2(const char *name);
 

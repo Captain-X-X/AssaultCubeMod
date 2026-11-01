@@ -154,9 +154,9 @@ struct md3part : part
 
     void begingenshadow()
     {
-        vertmodel::matrixpos = 0;
-        vertmodel::matrixstack[0].identity();
-        vertmodel::matrixstack[0].rotate_around_z(180*RAD);
+        model::matrixpos = 0;
+        model::matrixstack[0].identity();
+        model::matrixstack[0].rotate_around_z(180*RAD);
     }
 };
 /*
@@ -164,9 +164,12 @@ struct md3part : part
 * md3 model
 * ==========
 */
-md3::md3(const char *name) : vertmodel(name) {}
+md3::md3(const char *name) : model(name) {}
 
-int md3::type() { return MDL_MD3; }
+int md3::type() 
+{ 
+    return MDL_MD3; 
+}
 
 void md3::render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a, float scale)
 {
@@ -174,7 +177,7 @@ void md3::render(int anim, int varseed, float speed, int basetime, const vec3_t 
 
     if(a) for(int i = 0; a[i].tag; i++)
     {
-        vertmodel *m = (vertmodel *)a[i].m;
+        model *m = (model *)a[i].m;
         if(!m)
         {
             if(a[i].pos) link(NULL, a[i].tag);

@@ -106,7 +106,7 @@ extern int nquads;
 
 void setprojtexmatrix()
 {
-    glmatrixf projtex = mvpmatrix;
+    mat4_t projtex = mvpmatrix;
     projtex.projective();
 
     glMatrixMode(GL_TEXTURE);
@@ -122,7 +122,7 @@ void setupmultitexrefract(GLuint reflecttex, GLuint refracttex)
     glBindTexture(GL_TEXTURE_2D, refracttex);
     setprojtexmatrix();
 
-    glActiveTexture_(GL_TEXTURE1_ARB);
+    glActiveTexture(GL_TEXTURE1_ARB);
     glEnable(GL_TEXTURE_2D);
 
     setuptmu(1, "P , T @ C~a");
@@ -130,7 +130,7 @@ void setupmultitexrefract(GLuint reflecttex, GLuint refracttex)
     glBindTexture(GL_TEXTURE_2D, reflecttex);
     setprojtexmatrix();
 
-    glActiveTexture_(GL_TEXTURE0_ARB);
+    glActiveTexture(GL_TEXTURE0_ARB);
 }
 
 void setupmultitexreflect(GLuint reflecttex)
@@ -151,11 +151,11 @@ void cleanupmultitex(GLuint reflecttex, GLuint refracttex)
 
     if(refracttex)
     {
-        glActiveTexture_(GL_TEXTURE1_ARB);
+        glActiveTexture(GL_TEXTURE1_ARB);
         glDisable(GL_TEXTURE_2D);
         resettmu(1);
         glLoadIdentity();
-        glActiveTexture_(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0_ARB);
     }
     glMatrixMode(GL_MODELVIEW);
 }

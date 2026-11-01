@@ -14,7 +14,7 @@
 using namespace Maths;
 
 // client
-#include "renderer/vert_model.h"
+#include "renderer/model.h"
 #include "sound/sound.h"
 #include "weapon.h"
 #include "entity.h"

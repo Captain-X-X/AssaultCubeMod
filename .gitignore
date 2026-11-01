@@ -13,4 +13,4 @@
 .vs/
 .vscode/
 build/
-bin/bin_unix/native_client
+assaultcube_mod/bin/bin_unix/native_client

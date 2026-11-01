@@ -183,15 +183,21 @@ struct md2part : part
 
     void begingenshadow()
     {
-        vertmodel::matrixpos = 0;
-        vertmodel::matrixstack[0].identity();
-        vertmodel::matrixstack[0].rotate_around_z(180*RAD);
+        model::matrixpos = 0;
+        model::matrixstack[0].identity();
+        model::matrixstack[0].rotate_around_z(180*RAD);
     }
 };
 
-md2::md2(const char *name) : vertmodel(name) {}
+md2::md2(const char *name) : model(name) 
+{
 
-int md2::type() { return MDL_MD2; }
+}
+
+int md2::type() 
+{ 
+    return MDL_MD2; 
+}
 
 void md2::render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a, float scale)
 {
@@ -232,7 +238,7 @@ void md2::render(int anim, int varseed, float speed, int basetime, const vec3_t 
     {
         if(a[i].pos) link(NULL, a[i].tag, NULL);
 
-        vertmodel *m = (vertmodel *)a[i].m;
+        model *m = (model *)a[i].m;
         if(!m) continue;
         m->parts[0]->index = parts.length()+i;
         m->setskin();
@@ -247,7 +253,7 @@ void md2::rendershadow(int anim, int varseed, float speed, int basetime, const v
     parts[0]->rendershadow(anim, varseed, speed, basetime, o, yaw);
     if(a) for(int i = 0; a[i].tag; i++)
     {
-        vertmodel *m = (vertmodel *)a[i].m;
+        model *m = (model *)a[i].m;
         if(!m) continue;
         part *p = m->parts[0];
         p->rendershadow(anim, varseed, speed, basetime, o, yaw);
