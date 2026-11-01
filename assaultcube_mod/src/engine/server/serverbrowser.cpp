@@ -1,10 +1,8 @@
 // serverbrowser.cpp: eihrul's concurrent resolver, and server browser window management
-#include "pch.h"
-#include "cube.h"
-#include "server.h"
-#include "sv_gamemode.h"
-#include "protocol.h"
 
+#include "cube.h"
+
+#include "SDL_thread.h"
 #include "renderer/render_hud.h"
 #include "client/client.h"
 #include "client/clientgame.h"

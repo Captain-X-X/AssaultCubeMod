@@ -1,7 +1,7 @@
 #ifndef CLWINDOW_H
 #define CLWINDOW_H
-#include "pch.h"
 #include "cube.h"
+#include "pch.h"
 #include <string>
 #include <vector>
 #include <memory>

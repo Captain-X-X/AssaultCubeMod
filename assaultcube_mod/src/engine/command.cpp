@@ -4,8 +4,6 @@
 #include "cube.h"
 #include "command.h"
 #include "renderer/texture.h"
-#include "server/server.h"
-#include "server/sv_gamemode.h"
 
 bool allowidentaccess(ident *id);
 char *exchangestr(char *o, const char *n) { delete[] o; return newstring(n); }

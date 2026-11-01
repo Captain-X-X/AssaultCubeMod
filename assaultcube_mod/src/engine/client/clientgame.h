@@ -8,15 +8,13 @@ extern int gametimecurrent;
 extern int gametimemaximum;
 extern int lastgametimeupdate;
 
-struct serverstate
-{
-    int autoteam;
-    int mastermode;
-    int matchteamsize;
+struct serverstate { 
+    int autoteam; 
+    int mastermode; 
+    int matchteamsize; 
 
-    void reset()
-    {
-        autoteam = mastermode = matchteamsize = 0;
+    void reset() { 
+        autoteam = mastermode = matchteamsize = 0; 
     }
 };
 
@@ -45,7 +43,7 @@ void setskin(playerent *pl, int skin, int team = -1);
 void callvote(int type, const char *arg1 = NULL, const char *arg2 = NULL, const char *arg3 = NULL);
 void addsleep(int msec, const char *cmd, bool persist = false);
 void resetsleep(bool force = false);
-// game mode extras
+//game mode extras
 void flagpickup(int fln);
 void tryflagdrop(bool manual = false);
 void flagreturn(int fln);

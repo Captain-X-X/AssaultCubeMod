@@ -1,6 +1,5 @@
 // main.cpp: initialisation & main loop
 #include "cube.h"
-#include "engine/server/server.h"
 #include "engine/client/client.h"
 #include "engine/client/clientgame.h"
 #include "engine/renderer/shadow.h"
@@ -61,7 +60,6 @@ VARP(compatibilitymode, 0, 1, 1); // FIXME : find a better place to put this ?
 
 int main(int argc, char **argv)
 {
-    printf("this is it... 1202\n");
     sethomedir("bin_unix/data");
 
     extern struct servercommandline scl;
@@ -276,6 +274,9 @@ int main(int argc, char **argv)
     preload_playermodels();
     preload_hudguns();
 
+    initlog("curl");
+    setupcurl();
+
     preload_entmodels();
 
     initlog("docs");
@@ -295,6 +296,9 @@ int main(int argc, char **argv)
     }
 
     gamestarts = max(1, gamestarts + 1);
+    if (autodownload && (gamestarts % 100 == 1)) {
+        sortpckservers();
+    }
 
     initlog("mainloop");
 

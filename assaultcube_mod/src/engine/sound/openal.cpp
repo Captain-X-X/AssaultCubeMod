@@ -3,7 +3,6 @@
 #include "cube.h"
 
 #include "renderer/texture.h"
-#include "client/client.h"
 
 #define DEBUGCOND (audiodebug==1)
 
@@ -275,7 +274,7 @@ bool sbuffer::load(bool trydl)
                 stream *f = openfile(path(filepath), "rb");
                 if(!f && k>0 && trydl) // only try donwloading after trying all extensions
                 {
-                    // requirepackage(PCK_AUDIO, filepath);
+                    requirepackage(PCK_AUDIO, filepath);
                     bool skip = false;
                     loopj(sizeof(exts)/sizeof(exts[0])) if(strstr(name, exts[j])) skip = true;  // don't try extensions if name already has a known extension
                     if(skip) break;

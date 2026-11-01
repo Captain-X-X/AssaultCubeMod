@@ -1,11 +1,8 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 #include "cube.h"
-
-#include "client/window.h"
-#include "client/input.h"
-// #include "protocol.h"
-#include "server/net_auth.h"
+#include "window.h"
+#include "input.h"
 
 struct clientStatic {
     CWindow window;
@@ -72,37 +69,5 @@ void limitfps(int &millis, int curmillis);
 void connectserv(char *, int *, char *);
 
 void writeinitcfg();
-
-// client NET stuff
-// extern int autodownload;
-// void setupcurl();
-// bool requirepackage(int type, const char *path);
-// int downloadpackages();
-// void sortpckservers();
-// void writepcksourcecfg();
-
-void abortconnect();
-void disconnect(int onlyclean = 0, int async = 0);
-void cleanupclient();
-void toserver(char *text);
-void addmsg(int type, const char *fmt = NULL, ...);
-bool multiplayer(bool msg = true);
-bool allowedittoggle();
-void sendpackettoserv(int chan, ENetPacket *packet);
-void gets2c();
-void c2sinfo(playerent *d);
-void c2skeepalive();
-void neterr(const char *s);
-int getclientnum();
-void changeteam(int team, bool respawn = true); // deprecated?
-void getmap(char *name = NULL, char *callback = NULL);
-void newteam(char *name);
-bool securemapcheck(const char *map, bool msg = true);
-int getbuildtype();
-void sendintro();
-void getdemo(int *idx, char *dsp);
-void listdemos();
-bool tryauth(const char *desc);
-authkey *findauthkey(const char *desc);
 
 #endif

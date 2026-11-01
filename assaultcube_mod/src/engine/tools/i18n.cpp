@@ -1,9 +1,7 @@
 // internationalization and localization
+
 #include "cube.h"
 #include <locale.h>
-#include "lib/utf8.h"
-#include "client/client.h"
-#include "server/server.h"
 
 SVARFP(lang, "en", filterlang(lang, lang));
 

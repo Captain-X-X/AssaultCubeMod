@@ -10,10 +10,8 @@
 #include "renderer/render_hud.h"
 #include "renderer/render_text.h"
 
-#include "client/client.h"
 #include "client/clientgame.h"
 #include "editing.h"
-#include "server/server.h"
 
 float raycube(const vec &o, const vec &ray, vec &surface)
 {

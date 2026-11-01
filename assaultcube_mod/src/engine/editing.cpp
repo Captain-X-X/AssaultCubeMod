@@ -2,14 +2,25 @@
 
 #include "cube.h"
 
-#include "editing.h"
+// #include "renderer/shadow.h"
+// #include "renderer/render_text.h"
+// #include "renderer/render_model.h"
+// #include "renderer/render_hud.h"
+// #include "renderer/render_particles.h"
+// #include "renderer/rendergl.h"
+// #include "renderer/texture.h"
+// #include "renderer/world_ocull.h"
+
 #include "client/client.h"
 #include "client/clientgame.h"
+#include "server/protocol.h"
+#include "physics.h"
 #include "renderer/world_light.h"
 #include "renderer/world_ocull.h"
 #include "renderer/world_render.h"
-#include "physics.h"
 #include "worldio.h"
+
+#include "editing.h"
 #include "rndmap.h"
 
 bool editmode = false;

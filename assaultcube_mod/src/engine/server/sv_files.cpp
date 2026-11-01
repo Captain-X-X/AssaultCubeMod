@@ -1,7 +1,6 @@
 #include "cube.h"
 #include "server.h"
 #include "sv_files.h"
-#include "sv_gamemode.h"
 #include "worldio.h"
 #include "client/clientgame.h"
 #include "editing.h"

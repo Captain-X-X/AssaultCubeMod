@@ -1,5 +1,6 @@
 #include "crypto_tools.h"
 #include "cube.h"
+#include "server/protocol.h"
 
 /*
 * ==========
@@ -313,4 +314,3 @@ uint randomMT()
     y ^= (y >> 18);
     return y;
 }
-

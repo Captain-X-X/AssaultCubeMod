@@ -12,7 +12,6 @@
 
 #include "cube.h"
 #include "bot.h"
-#include "client/client.h"
 
 extern weaponinfo_s WeaponInfoTable[MAX_WEAPONS];
 

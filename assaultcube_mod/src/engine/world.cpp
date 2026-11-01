@@ -8,10 +8,9 @@
 #include "entities.h"
 #include "world.h"
 #include "physics.h"
-#include "client/client.h"
 #include "client/clientgame.h"
+#include "server/protocol.h"
 #include "editing.h"
-#include "server/server.h"
 
 
 sqr *world = NULL;

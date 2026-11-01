@@ -1,7 +1,6 @@
 // implementation of generic tools
 
 #include "cube.h"
-#include "client/client.h"
 
 const char *timestring(bool local, const char *fmt)
 {

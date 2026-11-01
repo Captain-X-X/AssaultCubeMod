@@ -1,72 +1,38 @@
 // hardcoded sounds, defined in sounds.cfg
 
+
 enum
-{ // To avoid a lot of work, possible bugs and allow backward compatibility for players own custom
+{    // To avoid a lot of work, possible bugs and allow backward compatibility for players own custom
     // cfg files, it's best not to change the listed sound order, instead, just add to it.
     S_JUMP = 0,
-    S_SOFTLAND,
-    S_HARDLAND,
-    S_BULLETAIR1,
-    S_BULLETAIR2,
-    S_BULLETHIT,
-    S_BULLETWATERHIT,
+    S_SOFTLAND, S_HARDLAND,
+    S_BULLETAIR1, S_BULLETAIR2, S_BULLETHIT, S_BULLETWATERHIT,
     S_KNIFE,
-    S_PISTOL,
-    S_RPISTOL,
-    S_CARBINE,
-    S_RCARBINE,
-    S_SHOTGUN,
-    S_RSHOTGUN,
-    S_SUBGUN,
-    S_RSUBGUN,
-    S_SNIPER,
-    S_RSNIPER,
-    S_ASSAULT,
-    S_RASSAULT,
-    S_ITEMAMMO,
-    S_ITEMHEALTH,
-    S_ITEMARMOUR,
-    S_ITEMAKIMBO,
-    S_NOAMMO,
-    S_AKIMBOOUT,
-    S_PAIN1,
-    S_PAIN2,
-    S_PAIN3,
-    S_PAIN4,
-    S_PAIN5,
-    S_PAIN6,
-    S_DIE1,
-    S_DIE2,
+    S_PISTOL, S_RPISTOL,
+    S_CARBINE, S_RCARBINE,
+    S_SHOTGUN, S_RSHOTGUN,
+    S_SUBGUN, S_RSUBGUN,
+    S_SNIPER, S_RSNIPER,
+    S_ASSAULT, S_RASSAULT,
+    S_ITEMAMMO, S_ITEMHEALTH,
+    S_ITEMARMOUR, S_ITEMAKIMBO,
+    S_NOAMMO, S_AKIMBOOUT,
+    S_PAIN1, S_PAIN2, S_PAIN3, S_PAIN4, S_PAIN5, S_PAIN6,
+    S_DIE1, S_DIE2,
     S_FEXPLODE,
-    S_SPLASH1,
-    S_SPLASH2,
-    S_FLAGDROP,
-    S_FLAGPICKUP,
-    S_FLAGRETURN,
-    S_FLAGSCORE,
-    S_GRENADEPULL,
-    S_GRENADETHROW,
-    S_GRENADEBOUNCE1,
-    S_GRENADEBOUNCE2,
-    S_RAKIMBO,
+    S_SPLASH1, S_SPLASH2,
+    S_FLAGDROP, S_FLAGPICKUP, S_FLAGRETURN, S_FLAGSCORE,
+    S_GRENADEPULL, S_GRENADETHROW, S_GRENADEBOUNCE1, S_GRENADEBOUNCE2, S_RAKIMBO,
     S_GUNCHANGE,
     S_HITSOUND,
-    S_GIB,
-    S_HEADSHOT,
-    S_CALLVOTE,
-    S_VOTEPASS,
-    S_VOTEFAIL,
-    S_FOOTSTEPS,
-    S_FOOTSTEPSCROUCH,
-    S_WATERFOOTSTEPS,
-    S_WATERFOOTSTEPSCROUCH,
-    S_CROUCH,
-    S_UNCROUCH,
-    S_MENUSELECT,
-    S_MENUENTER,
+    S_GIB, S_HEADSHOT,
+    S_CALLVOTE, S_VOTEPASS, S_VOTEFAIL,
+    S_FOOTSTEPS, S_FOOTSTEPSCROUCH, S_WATERFOOTSTEPS, S_WATERFOOTSTEPSCROUCH,
+    S_CROUCH, S_UNCROUCH,
+    S_MENUSELECT, S_MENUENTER,
     S_UNDERWATER,
     S_TINNITUS,
-    // begin: voicecoms
+// begin: voicecoms
     S_AFFIRMATIVE,
     S_ALLRIGHTSIR,
     S_COMEONMOVE,
@@ -183,6 +149,7 @@ public:
     void printposition();
 };
 
+
 // represents an OpenAL sound buffer
 
 class sbuffer
@@ -269,10 +236,11 @@ public:
     void seek(double offset);
 };
 
+
 struct soundconfig
 {
-    sbuffer *buf;      // sound data
-    int vol;           // volume
+    sbuffer *buf; // sound data
+    int vol; // volume
     int uses, maxuses; // track uses
     bool loop;
     bool muted;
@@ -281,7 +249,7 @@ struct soundconfig
     enum distancemodel
     {
         DM_DEFAULT = 0, // use openal distance model
-        DM_LINEAR       // custom linear model (used in conjunction with audibleradius)
+        DM_LINEAR // custom linear model (used in conjunction with audibleradius)
     };
 
     distancemodel model;
@@ -291,16 +259,12 @@ struct soundconfig
     void ondetach();
 };
 
+
 class worldobjreference
 {
 public:
-    enum worldobjtype
-    {
-        WR_CAMERA,
-        WR_PHYSENT,
-        WR_ENTITY,
-        WR_STATICPOS
-    };
+
+    enum worldobjtype { WR_CAMERA, WR_PHYSENT, WR_ENTITY, WR_STATICPOS };
     int type;
 
     worldobjreference(int t) : type(t) {}
@@ -309,10 +273,11 @@ public:
     virtual const vec &currentposition() const = 0;
     virtual bool nodistance() = 0;
     virtual bool operator==(const worldobjreference &other) = 0;
-    virtual bool operator!=(const worldobjreference &other) { return !(*this == other); }
+    virtual bool operator!=(const worldobjreference &other) { return !(*this==other); }
     virtual void attach() {}
     virtual void detach() {}
 };
+
 
 class camerareference : public worldobjreference
 {
@@ -324,6 +289,7 @@ public:
     bool nodistance();
     bool operator==(const worldobjreference &other);
 };
+
 
 class physentreference : public worldobjreference
 {
@@ -337,6 +303,7 @@ public:
     bool operator==(const worldobjreference &other);
 };
 
+
 struct entityreference : public worldobjreference
 {
 public:
@@ -349,6 +316,7 @@ public:
     bool operator==(const worldobjreference &other);
 };
 
+
 struct staticreference : public worldobjreference
 {
 public:
@@ -360,6 +328,7 @@ public:
     bool nodistance();
     bool operator==(const worldobjreference &other);
 };
+
 
 class location : sourceowner
 {
@@ -386,17 +355,19 @@ public:
     void drop();
 };
 
+
 struct locvector : vector<location *>
 {
     virtual ~locvector() {}
 
-    location *find(int sound, worldobjreference *ref /* = NULL*/, const vector<soundconfig> &soundcollection /* = gamesounds*/);
+    location *find(int sound, worldobjreference *ref/* = NULL*/, const vector<soundconfig> &soundcollection /* = gamesounds*/);
     void delete_(int i);
     void replaceworldobjreference(const worldobjreference &oldr, const worldobjreference &newr);
     void updatelocations();
     void forcepitch(float pitch);
     void deleteworldobjsounds();
 };
+
 
 // audio interface to the engine
 
@@ -412,6 +383,7 @@ class audiomanager
     oggstream *gamemusic;
 
 public:
+
     locvector locations;
 
     audiomanager();
@@ -476,4 +448,4 @@ extern int audiodebug;
 
 extern audiomanager audiomgr;
 
-#endif // #ifndef STANDALONE
+#endif //#ifndef STANDALONE

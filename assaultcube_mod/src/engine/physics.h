@@ -15,7 +15,7 @@ void updatecrouch(playerent *p, bool on);
 bool objcollide(physent *d, const vec &objpos, float objrad, float objheight);
 bool collide(physent *d, bool spawn = false, float drop = 0, float rise = 0, int level = 7);
 void attack(bool on);
-// void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m);
-// void vectoyawpitch(const vec &v, float &yaw, float &pitch);
+void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m);
+void vectoyawpitch(const vec &v, float &yaw, float &pitch);
 
 #endif

@@ -7,10 +7,9 @@
 #include "renderer/render_model.h"
 #include "renderer/render_hud.h"
 #include "renderer/rendergl.h"
-#include "client/client.h"
 #include "client/clientgame.h"
+#include "server/protocol.h"
 #include "editing.h"
-#include "server/server.h"
 
 void backup(char *name, char *backupname)
 {
@@ -531,37 +530,37 @@ bool load_world(char *mname)        // still supports all map formats that have 
     c2skeepalive();
 
     watch.start();
-    loopi(256) if(texuse[i]) lookupworldtexture(i);
+    loopi(256) if(texuse[i]) lookupworldtexture(i, autodownload ? true : false);
     int texloadtime = watch.stop();
 
     c2skeepalive();
 
     watch.start();
-    preload_mapmodels();
+    preload_mapmodels(autodownload ? true : false);
     int mdlloadtime = watch.stop();
 
     c2skeepalive();
 
     watch.start();
-    audiomgr.preloadmapsounds();
+    audiomgr.preloadmapsounds(autodownload ? true : false);
     int audioloadtime = watch.stop();
 
     c2skeepalive();
 
     watch.start();
-    // int downloaded = downloadpackages();
-    // if(downloaded > 0) printf("downloaded content (%d KB in %d seconds)\n", downloaded/1000, watch.stop()/1000);
+    int downloaded = downloadpackages();
+    if(downloaded > 0) printf("downloaded content (%d KB in %d seconds)\n", downloaded/1000, watch.stop()/1000);
 
     c2skeepalive();
 
     loadsky(NULL, true);
 
     watch.start();
-    loopi(256) if(texuse[i]) lookupworldtexture(i);
+    loopi(256) if(texuse[i]) lookupworldtexture(i, false);
     printf("loaded textures (%d milliseconds)\n", texloadtime+watch.stop());
     c2skeepalive();
     watch.start();
-    preload_mapmodels();
+    preload_mapmodels(false);
     printf("loaded mapmodels (%d milliseconds)\n", mdlloadtime+watch.stop());
     c2skeepalive();
     watch.start();

@@ -9,15 +9,13 @@
 //
 //
 //
+
 #include "cube.h"
 #include "bot.h"
-#include "client/client.h"
 #include "client/clientgame.h"
 #include "renderer/render_particles.h"
 #include "renderer/rendergl.h"
 #include "renderer/render_model.h"
-#include "server/server.h"
-#include "server/sv_gamemode.h"
 
 #ifndef VANILLA_CUBE // UNDONE
 bool dedserv = false;

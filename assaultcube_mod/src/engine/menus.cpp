@@ -5,6 +5,7 @@
 
 #include "client/client.h"
 #include "client/clientgame.h"
+#include "server/protocol.h"
 
 #include "renderer/shadow.h"
 #include "renderer/render_text.h"
@@ -18,7 +19,6 @@
 #include "editing.h"
 #include "command.h"
 #include "console.h"
-#include "server/server.h"
 
 extern int stringsort(const char **a, const char **b);
 

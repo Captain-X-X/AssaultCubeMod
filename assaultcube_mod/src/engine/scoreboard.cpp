@@ -3,10 +3,9 @@
 #include "cube.h"
 #include "scoreboard.h"
 #include "menus.h"
-#include "client/client.h"
 #include "client/clientgame.h"
-#include "server/sv_gamemode.h"
-#include "server/server.h"
+#include "client/client.h"
+#include "server/protocol.h"
 
 #define SCORERATIO(F,D) (float)(F >= 0 ? F : 0) / (float)(D > 0 ? D : 1)
 

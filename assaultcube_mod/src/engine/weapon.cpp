@@ -4,8 +4,8 @@
 #include "bot/bot.h"
 #include "hudgun.h"
 #include "physics.h"
-#include "client/client.h"
 #include "client/clientgame.h"
+#include "server/protocol.h"
 #include "editing.h"
 #include "renderer/rendergl.h"
 #include "renderer/render_hud.h"
@@ -13,7 +13,6 @@
 #include "renderer/render_particles.h"
 #include "renderer/render_text.h"
 #include "renderer/world_light.h"
-#include "server/server.h"
 
 VARP(autoreload, 0, 1, 1);
 VARP(akimboautoswitch, 0, 1, 1);
@@ -416,6 +415,14 @@ vector<hitmsg> hits;
 void hit(int damage, playerent *d, playerent *at, const vec &vel, int gun, bool gib, int info)
 {
     if(d==player1 || d->type==ENT_BOT || !m_mp(gamemode)) d->hitpush(damage, vel, at, gun);
+
+//     if(at!=player1 && d==player1)
+//     {
+//         extern int hitsound;
+//         extern int lasthit;
+//         if(hitsound && lasthit != lastmillis) audiomgr.playsound(S_HITSOUND);
+//         lasthit = lastmillis;
+//     }
 
     if(!m_mp(gamemode)) dodamage(damage, d, at, gun, gib);
     else

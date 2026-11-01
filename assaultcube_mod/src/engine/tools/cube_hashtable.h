@@ -1,8 +1,8 @@
 /*
-* ==========
-* CUBE impl of a vector array system
-* ==========
-*/
+ * ==========
+ * CUBE impl of a vector array system
+ * ==========
+ */
 #ifndef CUBEHASHTABLE_H
 #define CUBEHASHTABLE_H
 #include "cube_types.h"
@@ -48,16 +48,19 @@ struct hashtable
     typedef T value;
     typedef const T const_value;
 
-    enum {
+    enum
+    {
         CHUNKSIZE = 16
     };
 
-    struct chain {
+    struct chain
+    {
         T data;
         K key;
         chain *next;
     };
-    struct chainchunk {
+    struct chainchunk
+    {
         chain chains[CHUNKSIZE];
         chainchunk *next;
     };

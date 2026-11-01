@@ -1,8 +1,6 @@
 // server-side logging of events
 
 #include "cube.h"
-#include "client/client.h"
-#include "server/server.h"
 
 #if !defined(WIN32) && !defined(__APPLE__)
 

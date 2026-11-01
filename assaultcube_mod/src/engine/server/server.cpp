@@ -1,21 +1,16 @@
 // server.cpp: little more than enhanced multicaster
 // runs dedicated or as client coroutine
 
-#include "pch.h"
 #include "cube.h"
 
 #define DEBUGCOND (true)
 
 #include "server.h"
-#include "protocol.h"
-#include "servercontroller.h"
 #include "sv_files.h"
-#include "sv_gamemode.h"
 // 2011feb05:ft: quitproc
 #include "signal.h"
 #include "client/clientgame.h"
 #include "editing.h"
-#include "weapon.h"
 
 const char *messagenames[SV_NUM] =
 {
@@ -104,7 +99,7 @@ char killmessages[2][NUMGUNS][MAXKILLMSGLEN] = {{ "", "busted", "picked off", "p
 
 
 // config
-servercontroller *svcctrl = NULL;
+// servercontroller *svcctrl = NULL;
 servercommandline scl;
 servermaprot maprot;
 serveripblacklist ipblacklist;
@@ -4059,11 +4054,11 @@ void serverslice(uint timeout)   // main server update, called from cube main lo
 void cleanupserver()
 {
     if(serverhost) { enet_host_destroy(serverhost); serverhost = NULL; }
-    if(svcctrl)
-    {
-        svcctrl->stop();
-        DELETEP(svcctrl);
-    }
+    // if(svcctrl)
+    // {
+    //     svcctrl->stop();
+    //     DELETEP(svcctrl);
+    // }
     exitlogging();
 }
 
@@ -4254,17 +4249,17 @@ void initserver(bool dedicated, int argc, char **argv)
         }
     }
 
-    if(service && !svcctrl)
-    {
-        #ifdef WIN32
-        svcctrl = new winservice(service);
-        #endif
-        if(svcctrl)
-        {
-            svcctrl->argc = argc; svcctrl->argv = argv;
-            svcctrl->start();
-        }
-    }
+    // if(service && !svcctrl)
+    // {
+    //     #ifdef WIN32
+    //     svcctrl = new winservice(service);
+    //     #endif
+    //     if(svcctrl)
+    //     {
+    //         svcctrl->argc = argc; svcctrl->argv = argv;
+    //         svcctrl->start();
+    //     }
+    // }
 
     if ( strlen(scl.servdesc_full) ) global_name = scl.servdesc_full;
     else global_name = server_name;

@@ -16,14 +16,6 @@ enum class buttonState_t : char {
     BTN_HELD,
 };
 
-enum {
-    SDL_AC_BUTTON_WHEELDOWN = -5,
-    SDL_AC_BUTTON_WHEELUP = -4,
-    SDL_AC_BUTTON_RIGHT = -3,
-    SDL_AC_BUTTON_MIDDLE = -2,
-    SDL_AC_BUTTON_LEFT = -1
-};
-
 class CInput
 {
 public:

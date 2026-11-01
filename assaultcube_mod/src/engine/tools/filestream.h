@@ -1,8 +1,9 @@
 #ifndef CUBEFILESTREAM_H
 #define CUBEFILESTREAM_H
-#include "pch.h"
 #include "cube_types.h"
-#include "cube_vector.h"
+#include "lib/sdl/SDL.h"
+#include <zlib.h>
+#include <string.h>
 
 /* workaround for some C platforms that have these two functions as macros - not used anywhere */
 #ifdef getchar

@@ -10,7 +10,6 @@
 
 #include "cube.h"
 #include "bot.h"
-#include "client/client.h"
 
 #ifdef AC_CUBE
 

@@ -1,11 +1,10 @@
 // console.cpp: the console buffer, its display, and command line control
-#include "pch.h"
+
 #include "cube.h"
 #include "console.h"
 #include "menus.h"
 #include "client/client.h"
 #include "client/clientgame.h"
-#include "server/server.h"
 
 #include "renderer/shadow.h"
 #include "renderer/render_text.h"
@@ -384,7 +383,7 @@ COMMAND(getmapmsg, "");
 
 #if !defined(WIN32) && !defined(__APPLE__)
 #include <X11/Xlib.h>
-#include "lib/sdl/SDL_syswm.h"
+#include <SDL_syswm.h>
 #endif
 
 void pasteconsole(char *dst)

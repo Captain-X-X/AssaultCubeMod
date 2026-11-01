@@ -5,14 +5,13 @@
 #ifdef _FORTIFY_SOURCE
     #undef _FORTIFY_SOURCE
 #endif
-
 #define gamma __gamma
 #endif
 
 #include <math.h>
 
 #ifdef __GNUC__
-#undef gamma
+    #undef gamma
 #endif
 
 #include <string.h>
@@ -22,20 +21,17 @@
 #include <ctype.h>
 #include <time.h>
 #include <limits.h>
-#include <xmmintrin.h>
-#include <cmath>
-#include <memory.h>
-#include <unordered_map>
 #include <vector>
-
+#include <unordered_map>
 #ifdef __GNUC__
-// #include <new>
+#include <new>
 #include <signal.h>
 #else
 #include <new.h>
 #endif
 
 #include <zlib.h>
+#include <enet/enet.h>
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -50,11 +46,15 @@
 #define ZLIB_DLL
 #endif
 
+#ifndef STANDALONE
 #include "lib/sdl/SDL.h"
 #include "lib/sdl/SDL_image.h"
-#include "lib/sdl/SDL_thread.h"
+#include "lib/utf8.h"
 
 #include "lib/glad/glad.h"
+#define GL_GLEXT_LEGACY
+#define __glext_h__
+#define NO_SDL_GLEXT
 #include "lib/sdl/SDL_opengl.h"
 
 #ifdef __APPLE__
@@ -70,19 +70,16 @@
 #endif
 
 #include <setjmp.h>
+#endif
 
-// local types
-#include "maths/maths_func.h"
-#include "maths/vector_maths.h"
-#include "maths/matrix_maths.h"
-#include "tools/cube_types.h"
-#include "tools/cube_vector.h"
-#include "tools/cube_string.h"
-#include "tools/cube_hashtable.h"
+#ifndef CURL_STATICLIB
+#define CURL_STATICLIB
+#endif
+#ifndef STANDALONE
+#include "curl/curl.h"
+#endif
 
-// engine
-#include "tools/filestream.h"
-#include "tools/log.h"
+//
 #include "cube.h"
 
 #endif
