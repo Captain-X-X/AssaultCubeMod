@@ -78,12 +78,7 @@ static inline void swap(T &a, T &b)
         delete p;  \
         p = 0;     \
     }
-#define DELETEA(p)  \
-    if (p)          \
-    {               \
-        delete[] p; \
-        p = 0;      \
-    }
+#define DELETEA(p) if (p) { delete[] p; p = 0; }
 
 #ifdef WIN32
 #ifdef M_PI

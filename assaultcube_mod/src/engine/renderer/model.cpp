@@ -69,7 +69,13 @@ bool part::gentag(const char *name, int *verts, int numverts, mesh *m)
     ntags[numtags].name = newstring(name);
     loopi(numframes)
     {
-        memcpy(&ntags[(numtags + 1) * i], &tags[numtags * i], numtags * sizeof(tag));
+        // memcpy(&ntags[(numtags + 1) * i], &tags[numtags * i], numtags * sizeof(tag));
+
+        std::copy(
+            &tags[numtags * i],
+            &tags[numtags * i] + numtags,
+            &ntags[(numtags + 1) * i]
+        );
 
         tag *t = &ntags[(numtags + 1) * i + numtags];
         t->pos = m->verts[m->numverts * i + verts[0]];

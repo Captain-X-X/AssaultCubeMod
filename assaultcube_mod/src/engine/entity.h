@@ -3,6 +3,7 @@
 // #include "cube.h"
 #include "tools/cube_types.h"
 #include "server/protocol.h"
+
 enum // static entity types
 {
     NOTUSED = 0, // entity slot not in use in map
@@ -42,24 +43,18 @@ struct persistent_entity // map entity
     short attr1;
     uchar type; // type is one of the above
     uchar attr2, attr3, attr4;
-    persistent_entity(short x, short y, short z, uchar type, short attr1, uchar attr2, uchar attr3, uchar attr4) : x(x), y(y), z(z), attr1(attr1), type(type), attr2(attr2), attr3(attr3), attr4(attr4) {}
-    persistent_entity() {}
+    persistent_entity(short x, short y, short z, uchar type, short attr1, uchar attr2, uchar attr3, uchar attr4);
+    persistent_entity();
 };
 
 struct entity : persistent_entity
 {
     bool spawned; // the dynamic states of a map entity
     int lastmillis;
-    entity(short x, short y, short z, uchar type, short attr1, uchar attr2, uchar attr3, uchar attr4) : persistent_entity(x, y, z, type, attr1, attr2, attr3, attr4), spawned(false) {}
-    entity() {}
-    bool fitsmode(int gamemode) { return !m_noitems && isitem(type) && !(m_noitemsnade && type != I_GRENADE) && !(m_pistol && type == I_AMMO); }
-    void transformtype(int gamemode)
-    {
-        if (m_noitemsnade && type == I_CLIPS)
-            type = I_GRENADE;
-        else if (m_pistol && (type == I_AMMO || type == I_GRENADE))
-            type = I_CLIPS;
-    }
+    entity(short x, short y, short z, uchar type, short attr1, uchar attr2, uchar attr3, uchar attr4);
+    entity();
+    bool fitsmode(int gamemode);
+    void transformtype(int gamemode);
 };
 
 enum
@@ -115,7 +110,11 @@ extern itemstat powerupstats[I_ARMOUR - I_HEALTH + 1];
 struct guninfo
 {
     string modelname;
-    short sound, reload, reloadtime, attackdelay, damage, piercing, projspeed, part, spread, recoil, magsize, mdl_kick_rot, mdl_kick_back, recoilincrease, recoilbase, maxrecoil, recoilbackfade, pushfactor;
+    short sound;
+    short reload, reloadtime;
+    short attackdelay, damage, piercing, projspeed, part, spread, recoil;
+    short magsize, mdl_kick_rot, mdl_kick_back, recoilincrease, recoilbase, maxrecoil, recoilbackfade;
+    short pushfactor;
     bool isauto;
 };
 extern guninfo guns[NUMGUNS];
@@ -205,9 +204,9 @@ public:
 class physent : public worldobject
 {
 public:
-    vec o, vel, vel_t;      // origin, velocity
-    vec deltapos, newpos;   // movement interpolation
-    float yaw, pitch, roll; // used as vec in one place
+    vec3_t o, vel, vel_t;      // origin, velocity
+    vec3_t deltapos, newpos;   // movement interpolation
+    float yaw, pitch, roll; // used as vec3_t in one place
     float pitchvel;
     float maxspeed;                                  // cubes per second, 24 for player
     int timeinair;                                   // used for fake gravity
@@ -222,31 +221,13 @@ public:
     float eyeheightvel;
     int last_pos;
 
-    physent() : o(0, 0, 0), deltapos(0, 0, 0), newpos(0, 0, 0), yaw(270), pitch(0), roll(0), pitchvel(0),
-                crouching(false), crouchedinair(false), trycrouch(false), cancollide(true), stuck(false), scoping(false), shoot(false), lastjump(0), lastjumpheight(0), lastsplash(0), state(CS_ALIVE), last_pos(0)
-    {
-        reset();
-    }
-    virtual ~physent() {}
-
-    void resetinterp()
-    {
-        newpos = o;
-        newpos.z -= eyeheight;
-        deltapos = vec(0, 0, 0);
-    }
-
-    void reset()
-    {
-        vel.x = vel.y = vel.z = eyeheightvel = vel_t.x = vel_t.y = vel_t.z = 0.0f;
-        move = strafe = 0;
-        timeinair = lastjump = lastsplash = 0;
-        onfloor = onladder = inwater = jumpnext = crouching = crouchedinair = trycrouch = stuck = false;
-        last_pos = 0;
-    }
-
+    physent();
+    virtual ~physent();
+    
+    void resetinterp();
+    void reset();
     virtual void oncollision() {}
-    virtual void onmoved(const vec &dist) {}
+    virtual void onmoved(const vec3_t &dist) {}
 };
 
 class dynent : public physent // animated ent
@@ -259,36 +240,13 @@ public:
     void *lastmodel[2];
     int lastrendered;
 
-    void stopmoving()
-    {
-        k_left = k_right = k_up = k_down = jumpnext = false;
-        move = strafe = 0;
-    }
-
-    void resetanim()
-    {
-        loopi(2)
-        {
-            prev[i].reset();
-            current[i].reset();
-            lastanimswitchtime[i] = -1;
-            lastmodel[i] = NULL;
-        }
-        lastrendered = 0;
-    }
-
-    void reset()
-    {
-        physent::reset();
-        stopmoving();
-    }
-
-    dynent()
-    {
-        reset();
-        resetanim();
-    }
-    virtual ~dynent() {}
+public:
+    dynent();
+    virtual ~dynent();
+  
+    void stopmoving();
+    void resetanim();
+    void reset();
 };
 
 #define MAXNAMELEN 15
@@ -300,44 +258,15 @@ class bounceent;
 struct poshist
 {
     int nextupdate, curpos, numpos;
-    vec pos[POSHIST_SIZE];
+    vec3_t pos[POSHIST_SIZE];
 
-    poshist() : nextupdate(0) { reset(); }
+    poshist();
 
-    const int size() const { return numpos; }
-
-    void reset()
-    {
-        curpos = 0;
-        numpos = 0;
-    }
-
-    void addpos(const vec &o)
-    {
-        pos[curpos] = o;
-        curpos++;
-        if (curpos >= POSHIST_SIZE)
-            curpos = 0;
-        if (numpos < POSHIST_SIZE)
-            numpos++;
-    }
-
-    const vec &getpos(int i) const
-    {
-        i = curpos - 1 - i;
-        if (i < 0)
-            i += POSHIST_SIZE;
-        return pos[i];
-    }
-
-    void update(const vec &o, int lastmillis)
-    {
-        if (lastmillis < nextupdate)
-            return;
-        if (o.dist(pos[0]) >= 4.0f)
-            addpos(o);
-        nextupdate = lastmillis + 100;
-    }
+    const int size() const;
+    void reset();
+    void addpos(const vec3_t &o);
+    const vec3_t &getpos(int i) const;
+    void update(const vec3_t &o, int lastmillis);
 };
 
 class playerstate
@@ -350,185 +279,19 @@ public:
     int ammo[NUMGUNS], mag[NUMGUNS], gunwait[NUMGUNS];
     int pstatshots[NUMGUNS], pstatdamage[NUMGUNS];
 
-    playerstate() : armour(0), primary(GUN_ASSAULT), nextprimary(GUN_ASSAULT), akimbo(false) {}
-    virtual ~playerstate() {}
+    playerstate();
+    virtual ~playerstate();
 
-    void resetstats() { loopi(NUMGUNS) pstatshots[i] = pstatdamage[i] = 0; }
-
-    itemstat &itemstats(int type)
-    {
-        switch (type)
-        {
-        case I_CLIPS:
-            return ammostats[GUN_PISTOL];
-        case I_AMMO:
-            return ammostats[primary];
-        case I_GRENADE:
-            return ammostats[GUN_GRENADE];
-        case I_AKIMBO:
-            return ammostats[GUN_AKIMBO];
-        case I_HEALTH:
-        case I_HELMET:
-        case I_ARMOUR:
-            return powerupstats[type - I_HEALTH];
-        default:
-            return *(itemstat *)0;
-        }
-    }
-
-    bool canpickup(int type)
-    {
-        switch (type)
-        {
-        case I_CLIPS:
-            return ammo[akimbo ? GUN_AKIMBO : GUN_PISTOL] < ammostats[akimbo ? GUN_AKIMBO : GUN_PISTOL].max;
-        case I_AMMO:
-            return ammo[primary] < ammostats[primary].max;
-        case I_GRENADE:
-            return mag[GUN_GRENADE] < ammostats[GUN_GRENADE].max;
-        case I_HEALTH:
-            return health < powerupstats[type - I_HEALTH].max;
-        case I_HELMET:
-        case I_ARMOUR:
-            return armour < powerupstats[type - I_HEALTH].max;
-        case I_AKIMBO:
-            return !akimbo;
-        default:
-            return false;
-        }
-    }
-
-    void additem(itemstat &is, int &v)
-    {
-        v += is.add;
-        if (v > is.max)
-            v = is.max;
-    }
-
-    void pickup(int type)
-    {
-        switch (type)
-        {
-        case I_CLIPS:
-            additem(ammostats[GUN_PISTOL], ammo[GUN_PISTOL]);
-            additem(ammostats[GUN_AKIMBO], ammo[GUN_AKIMBO]);
-            break;
-        case I_AMMO:
-            additem(ammostats[primary], ammo[primary]);
-            break;
-        case I_GRENADE:
-            additem(ammostats[GUN_GRENADE], mag[GUN_GRENADE]);
-            break;
-        case I_HEALTH:
-            additem(powerupstats[type - I_HEALTH], health);
-            break;
-        case I_HELMET:
-        case I_ARMOUR:
-            additem(powerupstats[type - I_HEALTH], armour);
-            break;
-        case I_AKIMBO:
-            akimbo = true;
-            mag[GUN_AKIMBO] = guns[GUN_AKIMBO].magsize;
-            additem(ammostats[GUN_AKIMBO], ammo[GUN_AKIMBO]);
-            break;
-        }
-    }
-
-    void respawn()
-    {
-        health = 100;
-        armour = 0;
-        gunselect = GUN_PISTOL;
-        akimbo = false;
-        loopi(NUMGUNS) ammo[i] = mag[i] = gunwait[i] = 0;
-        ammo[GUN_KNIFE] = mag[GUN_KNIFE] = 1;
-    }
-
-    virtual void spawnstate(int gamemode)
-    {
-        if (m_pistol)
-            primary = GUN_PISTOL;
-        else if (m_osok)
-            primary = GUN_SNIPER;
-        else if (m_lss)
-            primary = GUN_KNIFE;
-        else
-            primary = nextprimary;
-
-        if (!m_nopistol)
-        {
-            ammo[GUN_PISTOL] = ammostats[GUN_PISTOL].start - magsize(GUN_PISTOL); // ammostats[GUN_PISTOL].max-magsize(GUN_PISTOL);
-            mag[GUN_PISTOL] = magsize(GUN_PISTOL);
-        }
-
-        if (!m_noprimary)
-        {
-            ammo[primary] = ammostats[primary].start - magsize(primary);
-            mag[primary] = magsize(primary);
-        }
-
-        gunselect = primary;
-
-        if (m_osok)
-            health = 1;
-        if (m_lms) // Survivor && Team-Survivor : 2010nov19
-        {
-            health = 100;
-            armour = 100;
-            ammo[GUN_GRENADE] = 2;
-        }
-    }
+    void resetstats();
+    itemstat &itemstats(int type);
+    bool canpickup(int type);
+    void additem(itemstat &is, int &v);
+    void pickup(int type);
+    void respawn();
+    virtual void spawnstate(int gamemode);
 
     // just subtract damage here, can set death, etc. later in code calling this
-    int dodamage(int damage, int gun)
-    {
-        guninfo gi = guns[gun];
-        if (damage == INT_MAX)
-        {
-            damage = health;
-            armour = health = 0;
-            return damage;
-        }
-
-        // 4-level armour - tiered approach: 16%, 33%, 37%, 41%
-        // Please update ./ac_website/htdocs/docs/introduction.html if this changes.
-        int armoursection = 0;
-        int ad = damage;
-        if (armour > 25)
-            armoursection = 1;
-        if (armour > 50)
-            armoursection = 2;
-        if (armour > 75)
-            armoursection = 3;
-        switch (armoursection)
-        {
-        case 0:
-            ad = (int)(16.0f / 25.0f * armour);
-            break; // 16
-        case 1:
-            ad = (int)(17.0f / 25.0f * armour) - 1;
-            break; // 33
-        case 2:
-            ad = (int)(4.0f / 25.0f * armour) + 25;
-            break; // 37
-        case 3:
-            ad = (int)(4.0f / 25.0f * armour) + 25;
-            break; // 41
-        default:
-            break;
-        }
-
-        // ra - reduced armor
-        // rd - reduced damage
-        int ra = (int)(ad * damage / 100.0f);
-        int rd = ra - (ra * (gi.piercing / 100.0f)); // Who cares about rounding errors anyways?
-
-        armour -= ra;
-        damage -= rd;
-
-        health -= damage;
-        return damage;
-    }
+    int dodamage(int damage, int gun);
 };
 
 #ifndef STANDALONE
@@ -554,7 +317,7 @@ public:
     int spectatemode, followplayercn;
     int eardamagemillis;
     int respawnoffset;
-    bool allowmove() { return state != CS_DEAD || spectatemode == SM_FLY; }
+    bool allowmove();
 
     weapon *weapons[NUMGUNS];
     weapon *prevweaponsel, *weaponsel, *nextweaponsel, *primweap, *nextprimweap, *lastattackweapon;
@@ -566,125 +329,25 @@ public:
     float deltayaw, deltapitch, newyaw, newpitch;
     int smoothmillis;
 
-    vec head;
+    vec3_t head;
 
     bool ignored, muted;
 
-    playerent() : curskin(0), clientnum(-1), lastupdate(0), plag(0), ping(0), address(0), lifesequence(0), frags(0), flagscore(0), deaths(0), points(0), tks(0), lastpain(0), lastvoicecom(0), clientrole(CR_DEFAULT),
-                  team(TEAM_SPECT), spectatemode(SM_NONE), followplayercn(FPCN_VOID), eardamagemillis(0), respawnoffset(0),
-                  prevweaponsel(NULL), weaponsel(NULL), nextweaponsel(NULL), primweap(NULL), nextprimweap(NULL), lastattackweapon(NULL),
-                  smoothmillis(-1),
-                  head(-1, -1, -1), ignored(false), muted(false)
-    {
-        type = ENT_PLAYER;
-        name[0] = 0;
-        maxeyeheight = 4.5f;
-        aboveeye = 0.7f;
-        radius = 1.1f;
-        maxspeed = 16.0f;
-        skin_noteam = skin_cla = skin_rvsf = NULL;
-        loopi(2) nextskin[i] = 0;
-        respawn();
-    }
-
-    virtual ~playerent()
-    {
-        extern void removebounceents(playerent * owner);
-        extern void removedynlights(physent * owner);
-        extern void zapplayerflags(playerent * owner);
-        extern void cleanplayervotes(playerent * owner);
-        extern physent *camera1;
-        extern void togglespect();
-        removebounceents(this);
-        audiomgr.detachsounds(this);
-        removedynlights(this);
-        zapplayerflags(this);
-        cleanplayervotes(this);
-        if (this == camera1)
-            togglespect();
-    }
-
-    void damageroll(float damage)
-    {
-        extern void clamproll(physent * pl);
-        float damroll = 2.0f * damage;
-        roll += roll > 0 ? damroll : (roll < 0 ? -damroll : (rnd(2) ? damroll : -damroll)); // give player a kick
-        clamproll(this);
-    }
-
-    void hitpush(int damage, const vec &dir, playerent *actor, int gun)
-    {
-        if (gun < 0 || gun > NUMGUNS)
-            return;
-        vec push(dir);
-        push.mul(damage / 100.0f * guns[gun].pushfactor);
-        vel.add(push);
-        extern int lastmillis;
-        if (gun == GUN_GRENADE && damage > 50)
-            eardamagemillis = lastmillis + damage * 100;
-    }
-
-    void resetspec()
-    {
-        spectatemode = SM_NONE;
-        followplayercn = FPCN_VOID;
-    }
-
-    void respawn()
-    {
-        dynent::reset();
-        playerstate::respawn();
-        history.reset();
-        if (weaponsel)
-            weaponsel->reset();
-        lastaction = 0;
-        lastattackweapon = NULL;
-        attacking = false;
-        extern int lastmillis;
-        weaponchanging = lastmillis - weapons[gunselect]->weaponchangetime / 2; // 2011jan16:ft: for a little no-shoot after spawn
-        resetspec();
-        eardamagemillis = 0;
-        eyeheight = maxeyeheight;
-        curskin = nextskin[team_base(team)];
-    }
-
-    void spawnstate(int gamemode)
-    {
-        playerstate::spawnstate(gamemode);
-        prevweaponsel = weaponsel = weapons[gunselect];
-        primweap = weapons[primary];
-        nextprimweap = weapons[nextprimary];
-        curskin = nextskin[team_base(team)];
-    }
-
-    void selectweapon(int w)
-    {
-        if (weaponsel)
-            prevweaponsel = weaponsel;
-        weaponsel = weapons[(gunselect = w)];
-        if (!prevweaponsel)
-            prevweaponsel = weaponsel;
-    }
-    void setprimary(int w) { primweap = weapons[(primary = w)]; }
-    void setnextprimary(int w) { nextprimweap = weapons[(nextprimary = w)]; }
-    bool isspectating() { return state == CS_SPECTATE || (state == CS_DEAD && spectatemode > SM_NONE); }
-    void weaponswitch(weapon *w)
-    {
-        if (!w)
-            return;
-        extern int lastmillis;
-        weaponsel->ondeselecting();
-        weaponchanging = lastmillis;
-        nextweaponsel = w;
-        w->onselecting();
-    }
-    int skin(int t = -1) { return nextskin[team_base(t < 0 ? team : t)]; }
-    void setskin(int t, int s)
-    {
-        const int maxskin[2] = {4, 6};
-        t = team_base(t < 0 ? team : t);
-        nextskin[t] = abs(s) % maxskin[t];
-    }
+    playerent();
+    virtual ~playerent();
+    
+    void damageroll(float damage);
+    void hitpush(int damage, const vec3_t &dir, playerent *actor, int gun);
+    void resetspec();
+    void respawn();
+    void spawnstate(int gamemode);
+    void selectweapon(int w);
+    void setprimary(int w);
+    void setnextprimary(int w);
+    bool isspectating();
+    void weaponswitch(weapon *w);
+    int skin(int t = -1);
+    void setskin(int t, int s);
 };
 
 class CBot;
@@ -711,7 +374,6 @@ public:
 #endif // #ifndef STANDALONE
 
 // flag-mode entities
-
 enum
 {
     CTFF_INBASE = 0,
@@ -726,14 +388,13 @@ struct flaginfo
     entity *flagent;
     int actor_cn;
     playerent *actor;
-    vec pos;
+    vec3_t pos;
     int state; // one of CTFF_*
     bool ack;
     flaginfo() : flagent(0), actor(0), state(CTFF_INBASE), ack(false) {}
 };
 
 // nades, gibs
-
 enum
 {
     BT_NONE,
@@ -749,18 +410,10 @@ public:
     bool plclipped;
     playerent *owner;
 
-    bounceent() : bouncetype(BT_NONE), rotspeed(1.0f), plclipped(false), owner(NULL)
-    {
-        type = ENT_BOUNCE;
-        maxspeed = 40;
-        radius = 0.2f;
-        eyeheight = maxeyeheight = 0.3f;
-        aboveeye = 0.0f;
-    }
+    bounceent();
+    virtual ~bounceent();
 
-    virtual ~bounceent() {}
-
-    bool isalive(int lastmillis) { return lastmillis - millis < timetolive; }
+    bool isalive(int lastmillis);
     virtual void destroy() {}
     virtual bool applyphysics() { return true; }
 };
@@ -779,15 +432,15 @@ public:
     float distsincebounce;
     grenadeent(playerent *owner, int millis = 0);
     ~grenadeent();
-    void activate(const vec &from, const vec &to);
-    void _throw(const vec &from, const vec &vel);
+    void activate(const vec3_t &from, const vec3_t &to);
+    void _throw(const vec3_t &from, const vec3_t &vel);
     void explode();
     void splash();
     virtual void destroy();
     virtual bool applyphysics();
-    void moveoutsidebbox(const vec &direction, playerent *boundingbox);
+    void moveoutsidebbox(const vec3_t &direction, playerent *boundingbox);
     void oncollision();
-    void onmoved(const vec &dist);
+    void onmoved(const vec3_t &dist);
 };
 
 enum

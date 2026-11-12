@@ -302,7 +302,8 @@ void CWaypointClass::SaveWaypoints()
      header.iWPCount = m_iWaypointCount;
 
      memset(header.szMapName, 0, sizeof(header.szMapName));
-     strncpy(header.szMapName, m_szMapName, sizeof(header.szMapName)-1);
+     // strncpy(header.szMapName, m_szMapName, sizeof(header.szMapName)-1);
+     snprintf(header.szMapName, sizeof(header.szMapName), "%s", m_szMapName);
      header.szMapName[sizeof(header.szMapName)-1] = 0;
 
      strcpy(mapname, m_szMapName);
@@ -495,7 +496,8 @@ void CWaypointClass::SaveWPExpFile()
      header.iWPCount = m_iWaypointCount;
 
      memset(header.szMapName, 0, sizeof(header.szMapName));
-     strncpy(header.szMapName, m_szMapName, 31);
+     // strncpy(header.szMapName, m_szMapName, 31);
+     snprintf(header.szMapName, sizeof(header.szMapName), "%s", m_szMapName);
      header.szMapName[31] = 0;
 
      strcpy(mapname, m_szMapName);
@@ -848,7 +850,7 @@ void CWaypointClass::DeleteWaypoint(vec v_src)
 
      if (!pWP)
      {
-          conoutf("Error: Couldn´t find near waypoint");
+          conoutf("Error: Couldnï¿½t find near waypoint");
           return;
      }
 

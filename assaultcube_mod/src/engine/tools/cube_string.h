@@ -32,9 +32,26 @@
 #define MAXSTRLEN 260
 typedef char string[MAXSTRLEN];
 
-inline void vformatstring(char *d, const char *fmt, va_list v, int len = MAXSTRLEN) { _vsnprintf(d, len, fmt, v); d[len-1] = 0; }
-inline char *copystring(char *d, const char *s, size_t len = MAXSTRLEN) { strncpy(d, s, len); d[len-1] = 0; return d; }
-inline char *concatstring(char *d, const char *s, size_t len = MAXSTRLEN) { size_t used = strlen(d); return used < len ? copystring(d+used, s, len-used) : d; }
+static inline void vformatstring(char *d, const char *fmt, va_list v, int len = MAXSTRLEN)
+{ 
+    _vsnprintf(d, len, fmt, v); 
+    d[len-1] = 0; 
+}
+
+static inline char* copystring(char *d, const char *s, size_t len = MAXSTRLEN)
+{ 
+    if (len > 0) {
+        snprintf(d, len, "%s", s);
+    }
+    return d;
+}
+
+static inline char* concatstring(char *d, const char *s, size_t len = MAXSTRLEN)
+{ 
+    size_t used = strlen(d); 
+    return used < len ? copystring(d+used, s, len-used) : d; 
+}
+
 extern char *concatformatstring(char *d, const char *s, ...);
 
 struct stringformatter

@@ -73,4 +73,4 @@ struct tristrip {
 uint hthash(const edge &x);
 bool htcmp(const edge &x, const edge &y);
 
-#endif;
+#endif

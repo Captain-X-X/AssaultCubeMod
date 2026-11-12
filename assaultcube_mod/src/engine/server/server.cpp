@@ -3535,7 +3535,7 @@ void process(ENetPacket *packet, int sender, int chan)
                         }
                         else
                         {
-                            strncpy(vi->text,text,MAXTRANS-1);
+                            copystring(vi->text, text, MAXTRANS);
                             vi->num1 = mode;
                             vi->num2 = time;
                         }
@@ -3543,7 +3543,7 @@ void process(ENetPacket *packet, int sender, int chan)
                         if(mode==GMODE_DEMO) vi->action = new demoplayaction(newstring(text));
                         else
                         {
-                            char *vmap = newstring(vi->text ? behindpath(vi->text) : "");
+                            char *vmap = newstring(behindpath(vi->text));
                             vi->action = new mapaction(vmap, qmode, time, sender, qmode!=mode);
                         }
                         break;
@@ -3552,7 +3552,8 @@ void process(ENetPacket *packet, int sender, int chan)
                     {
                         vi->num1 = cn2boot = getint(p);
                         getstring(text, p);
-                        strncpy(vi->text,text,128);
+                        // strncpy(vi->text,text,128);
+                        copystring(vi->text, text, 128);
                         filtertext(text, text);
                         trimtrailingwhitespace(text);
                         vi->action = new kickaction(cn2boot, newstring(text, 128));
@@ -3563,7 +3564,8 @@ void process(ENetPacket *packet, int sender, int chan)
                     {
                         vi->num1 = cn2boot = getint(p);
                         getstring(text, p);
-                        strncpy(vi->text,text,128);
+                        // strncpy(vi->text,text,128);
+                        copystring(vi->text, text, 128);
                         filtertext(text, text);
                         trimtrailingwhitespace(text);
                         vi->action = new banaction(cn2boot, newstring(text, 128));
@@ -3601,7 +3603,7 @@ void process(ENetPacket *packet, int sender, int chan)
                         break;
                     case SA_SERVERDESC:
                         getstring(text, p);
-                        strncpy(vi->text,text,MAXTRANS-1);
+                        copystring(vi->text, text, MAXTRANS);
                         filtertext(text, text);
                         vi->action = new serverdescaction(newstring(text), sender);
                         break;
@@ -4232,17 +4234,14 @@ void quitproc(int param)
 
 void initserver(bool dedicated, int argc, char **argv)
 {
-    const char *service = NULL;
+    // const char *service = NULL;
 
-    for(int i = 1; i<argc; i++)
-    {
-        if(!scl.checkarg(argv[i]))
-        {
+    for(int i = 1; i<argc; i++) {
+        if(!scl.checkarg(argv[i])) {
             char *a = &argv[i][2];
-            if(!scl.checkarg(argv[i]) && argv[i][0]=='-') switch(argv[i][1])
-            {
+            if(!scl.checkarg(argv[i]) && argv[i][0]=='-') switch(argv[i][1]) {
                 case '-': break;
-                case 'S': service = a; break;
+                // case 'S': service = a; break;
                 default: break; /*printf("WARNING: unknown commandline option\n");*/ // less warnings - 2011feb05:ft: who disabled this - I think this should be on - more warnings == more clarity
             }
             else if (strncmp(argv[i], "assaultcube://", 13)) printf("WARNING: unknown commandline argument\n");

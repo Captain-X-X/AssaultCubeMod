@@ -120,6 +120,7 @@ struct md3part : part
             loopj(mheader.numtriangles)
             {
                 md3triangle tri;
+                memset((void*)&tri, 0, sizeof(md3triangle));
                 f->read(&tri, sizeof(md3triangle)); // read the triangles
                 lilswap((int *)&tri, 3);
                 loopk(3) m.tris[j].vert[k] = (ushort)tri.vertexindices[k];
@@ -135,7 +136,8 @@ struct md3part : part
             f->seek(mesh_offset + mheader.ofs_vertices, SEEK_SET);
             loopj(numframes*mheader.numvertices)
             {
-                md3vertex v;
+                md3vertex v = md3vertex();
+                // memset((void*)&v, 0, sizeof(md3vertex));
                 f->read(&v, sizeof(md3vertex)); // read the vertices
                 lilswap((short *)&v, 4);
 

@@ -38,11 +38,12 @@ CWindowEventHandler::~CWindowEventHandler()
 bool CWindowEventHandler::registerRecver(iEventRecv* erecv)
 {
     m_eventRecv.push_back(erecv);
+    return true;
 }
 
 void CWindowEventHandler::sendEvent(SDL_Event& event, windowInfo_s* pwindowInfo)
 {
-    for (int i = 0; i < m_eventRecv.size(); i++) {
+    for (size_t i = 0; i < m_eventRecv.size(); i++) {
         if (m_eventRecv[i]) {
             m_eventRecv[i]->handleEvent(event, pwindowInfo);
         }
@@ -101,7 +102,7 @@ bool CWindow::createWindow(windowInfo_s& winfo)
 
 CWindow::CWindow()
 {
-    memset(&m_info, 0, sizeof(windowInfo_s));
+    m_info = windowInfo_s();
     // m_pEventHandler = nullptr;
     this->pInput = nullptr;
     m_shouldExit = false;
@@ -119,7 +120,6 @@ bool CWindow::create(windowInfo_s& winfo)
     }
 
     if (createWindow(winfo)) {
-        memset(&m_info, 0, sizeof(windowInfo_s));
         this->m_info = winfo;
         return true;
     }

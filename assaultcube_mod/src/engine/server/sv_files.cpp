@@ -605,8 +605,12 @@ void serverforbiddenlist::addentry(char *s)
     char *c1 = s1, *c2 = s2;
     if (num < 100 && (n = sscanf(s,"%s %s",s1,s2)) > 0 ) // no warnings
     {
-        strncpy(entries[num][0],c1,FORBIDDENSIZE);
-        if ( n > 1 ) strncpy(entries[num][1],c2,FORBIDDENSIZE);
+        // strncpy(entries[num][0],c1,FORBIDDENSIZE);
+        snprintf(entries[num][0], 16, "%s", c1);
+        if (n > 1) {
+            // strncpy(entries[num][1],c2,FORBIDDENSIZE);
+            snprintf(entries[num][1], 16, "%s", c2);
+        }
         else entries[num][1][0]='\0';
         num++;
     }

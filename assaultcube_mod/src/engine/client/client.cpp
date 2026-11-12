@@ -21,6 +21,7 @@
 #include "docs.h"
 #include "menus.h"
 #include "scoreboard.h"
+#include "tools/crypto_tools.h"
 
 clientStatic g_client;
 
