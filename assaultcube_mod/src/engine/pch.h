@@ -23,6 +23,12 @@
 #include <limits.h>
 #include <vector>
 #include <unordered_map>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+
 #ifdef __GNUC__
 #include <new>
 #include <signal.h>
@@ -46,31 +52,22 @@
 #define ZLIB_DLL
 #endif
 
-#ifndef STANDALONE
-#include "lib/sdl/SDL.h"
-#include "lib/sdl/SDL_image.h"
-#include "lib/utf8.h"
-
+// #ifndef STANDALONE
 #include "lib/glad/glad.h"
+
+#include "lib/sdl/SDL.h"
+#include "lib/utf8_cpp/utf8.h"
 #define GL_GLEXT_LEGACY
 #define __glext_h__
 #define NO_SDL_GLEXT
 #include "lib/sdl/SDL_opengl.h"
-
-#ifdef __APPLE__
-#include "INTL/libintl.h"
-#include "OpenAL/al.h"
-#include "OpenAL/alc.h"
-#include "Vorbis/vorbisfile.h"
-#else
-#include <libintl.h>
+#include "lib/stb_image.h"
 #include "lib/AL/al.h"
 #include "lib/AL/alc.h"
 #include "lib/vorbis/vorbisfile.h"
-#endif
 
+#include <libintl.h>
 #include <setjmp.h>
-#endif
 
 #ifndef CURL_STATICLIB
 #define CURL_STATICLIB

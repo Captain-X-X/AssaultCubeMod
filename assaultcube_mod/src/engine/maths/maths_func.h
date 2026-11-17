@@ -56,4 +56,8 @@ namespace Maths
 #define SQRT3 (1.7320508f)
 #define RAD (PI / 180.0f)
 
+static inline float ToRadians(float degrees) {
+    return degrees * M_PI / 180.0;
+}
+
 #endif

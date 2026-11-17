@@ -24,7 +24,6 @@ find_package(SDL REQUIRED)
 find_package(CURL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
-pkg_check_modules(SDL_IMAGE REQUIRED SDL_image)
 pkg_check_modules(VORBIS REQUIRED vorbisfile)
 
 set(ENET_ROOT ${CMAKE_SOURCE_DIR}/src/engine/lib/enet)
@@ -62,7 +61,6 @@ target_include_directories(native_client PRIVATE
     ${SDL_INCLUDE_DIR}
     ${OPENAL_INCLUDE_DIR}
     ${CURL_INCLUDE_DIRS}
-    ${SDL_IMAGE_INCLUDE_DIRS}
     ${VORBIS_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/include
     ${ENET_INCLUDE_DIRS}
@@ -74,7 +72,6 @@ target_link_libraries(native_client PRIVATE
     ${SDL_LIBRARY}
     OpenAL::OpenAL
     CURL::libcurl
-    ${SDL_IMAGE_LIBRARIES}
     ${VORBIS_LIBRARIES}
     enet
     X11

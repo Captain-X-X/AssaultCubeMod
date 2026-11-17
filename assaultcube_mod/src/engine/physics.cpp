@@ -945,38 +945,47 @@ void mousemove(int odx, int ody)
     float cursens = sensitivity;
     if(senst) {cursens=testsens;}
     if(mouseaccel && curtime && (dx || dy)) cursens += 0.02f * mouseaccel * sqrtf(dx*dx + dy*dy)/curtime;
-    if(scopesens==0 || !zooming(player1))
-    {
-        if(scopesensfeel)
-        {
+    
+    float camYaw = camera1->yaw;
+    float camPitch = camera1->pitch;
+    if(scopesens==0 || !zooming(player1)) {
+        if(scopesensfeel) {
             // AC 1.1
             cursens /= 33.0f*sensitivityscale;
             if( zooming(player1) ) { cursens *= autoscopesens ? scopesensfunc : scopesensscale; }
-            camera1->yaw += dx*cursens;
-            camera1->pitch -= dy*cursens*(invmouse ? -1 : 1);
+            // camera1->yaw += dx*cursens;
+            camYaw += dx*cursens;
+            // camera1->pitch -= dy*cursens*(invmouse ? -1 : 1);
+            camPitch -= dy*cursens*(invmouse ? -1 : 1);
         }
-        else
-        {
+        else {
             // AC 1.0
             if( zooming(player1) ) { cursens *= autoscopesens ? scopesensfunc : scopesensscale; }
             float sensfactor = 33.0f*sensitivityscale;
-            camera1->yaw += dx*cursens/sensfactor;
-            camera1->pitch -= dy*cursens*(invmouse ? -1 : 1)/sensfactor;
+            // camera1->yaw += dx*cursens/sensfactor;
+            camYaw += dx*cursens/sensfactor;
+            // camera1->pitch -= dy*cursens*(invmouse ? -1 : 1)/sensfactor;
+            camPitch -= dy*cursens*(invmouse ? -1 : 1)/sensfactor;
         }
     }
     else
     {
         // user provided value
         float sensfactor = 33.0f*sensitivityscale;
-        camera1->yaw += dx*scopesens/sensfactor;
-        camera1->pitch -= dy*scopesens*(invmouse ? -1 : 1)/sensfactor;
+        // camera1->yaw += dx*scopesens/sensfactor;
+        camYaw += dx*scopesens/sensfactor;
+        // camera1->pitch -= dy*scopesens*(invmouse ? -1 : 1)/sensfactor;
+        camPitch -= dy*scopesens*(invmouse ? -1 : 1)/sensfactor;
     }
+
+    camera1->yaw = camYaw;
+    camera1->pitch = camPitch;
 
     fixcamerarange();
     if(camera1!=player1 && player1->spectatemode!=SM_DEATHCAM)
     {
-        player1->yaw = camera1->yaw;
-        player1->pitch = camera1->pitch;
+        player1->yaw = camYaw;
+        player1->pitch = camPitch;
     }
 }
 

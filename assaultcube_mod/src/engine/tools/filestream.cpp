@@ -1,5 +1,14 @@
+#include "pch.h"
 #include "cube.h"
 #include "filestream.h"
+
+// #include <stdio.h>
+// #include <iostream>
+// #include <fstream>
+// #include <string>
+// #include <sstream>
+// #include <iomanip>
+// #include <stdarg.h>
 
 ///////////////////////// file system ///////////////////////
 
@@ -9,6 +18,25 @@
 #include <sys/types.h>
 #include <dirent.h>
 #endif
+
+std::string ReadFile(const std::string& file)
+{
+    if (file.empty()) {
+        return NULL;
+    }
+    std::ifstream in(file, std::ios::binary);
+    if (in) {
+        std::string contents;
+        in.seekg(0, std::ios::end);
+        contents.resize(in.tellg());
+        in.seekg(0, std::ios::beg);
+        in.read(&contents[0], contents.size());
+        in.close();
+        return(contents);
+    }
+    printf("failed to open file: %s\n", file.c_str());
+    return std::string("");
+}
 
 string homedir = "";
 vector<char *> packagedirs;

@@ -20,7 +20,7 @@ using namespace Maths;
 #include "entity.h"
 #include "world.h"
 #include "tools/i18n.h"
-#include "command.h"
+#include "script/command.h"
 
 // server
 #include "server/protocol.h"

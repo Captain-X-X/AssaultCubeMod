@@ -17,7 +17,7 @@
 #include "renderer/world_ocull.h"
 
 #include "editing.h"
-#include "command.h"
+#include "script/command.h"
 #include "console.h"
 
 extern int stringsort(const char **a, const char **b);

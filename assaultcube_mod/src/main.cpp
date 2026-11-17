@@ -18,6 +18,11 @@
 
 #include "engine/client/window.h"
 
+#include "engine/renderer/api/gl/vertexbuffer.h"
+#include "engine/renderer/api/gl/vertexarray.h"
+#include "engine/renderer/api/gl/indexbuffer.h"
+#include "engine/renderer/api/gl/shader.h"
+
 #ifdef WIN32
 static char *parsecommandline(const char *src, vector<char *> &args)
 {
@@ -168,6 +173,35 @@ int main(int argc, char **argv)
     g_client.window.registerInputHandler(&g_client.input);
 
     screen = g_client.window.getInfo().pWindow;
+
+    // new renderer testing
+    VertexArray vao0;
+    vao0.create();
+
+    unsigned int bufferSizeTest_idx = (4 * 50000);
+    unsigned int bufferSizeTest = (6 * 50000);
+
+    VertexBuffer vbo0;
+    vbo0.create(bufferSizeTest_idx, VertexBufferLayoutType_t::DEF_2D);
+
+    IndexBuffer ibo0;
+    ibo0.create(bufferSizeTest); // 100K X 6
+    
+    Shader shader0;
+    if (!shader0.load("bin_unix/data/shaders/gl_default2d.vert", "bin_unix/data/shaders/gl_default2d.frag")) {
+        printf("shader failed to load!!\n");
+    }
+
+    // shader0.bind();
+    vao0.unbind();
+    vbo0.unbind();
+    ibo0.unbind();
+    shader0.unbind();
+    
+    shader0.destroy();
+    vao0.destroy();
+    vbo0.destroy();
+    ibo0.destroy();
 
     // no more TTF ATM.
     // initlog("font");
@@ -358,6 +392,7 @@ int main(int argc, char **argv)
             gl_drawframe(screen->w, screen->h, fps < lowfps ? fps / lowfps : (fps > highfps ? fps / highfps : 1.0f), fps);
             // if (frames > 4)
             //     SDL_GL_SwapBuffers();
+            // hudonlyf("test!!!!!");
         }
 
         g_client.window.clear();

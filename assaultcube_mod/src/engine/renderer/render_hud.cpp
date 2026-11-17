@@ -256,7 +256,21 @@ void drawscope(bool preload)
     glEnable(GL_BLEND);
 }
 
-const char *crosshairnames[CROSSHAIR_NUM] = { "default", "teammate", "scope", "knife", "pistol", "carbine", "shotgun", "smg", "sniper", "ar", "cpistol", "grenades", "akimbo" };
+const char *crosshairnames[CROSSHAIR_NUM] = { 
+    "default", 
+    "teammate", 
+    "scope", 
+    "knife", 
+    "pistol", 
+    "carbine", 
+    "shotgun", 
+    "smg", 
+    "sniper", 
+    "ar", 
+    "cpistol", 
+    "grenades", 
+    "akimbo" 
+};
 Texture *crosshairs[CROSSHAIR_NUM] = { NULL }; // weapon specific crosshairs
 
 Texture *loadcrosshairtexture(const char *c)

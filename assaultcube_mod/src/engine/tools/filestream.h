@@ -125,4 +125,6 @@ bool preparedir(const char *destination);
 bool addzip(const char *name, const char *mount = NULL, const char *strip = NULL, bool extract = false, int type = -1);
 bool removezip(const char *name);
 
+std::string ReadFile(const std::string& file);
+
 #endif

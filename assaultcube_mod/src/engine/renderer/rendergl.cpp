@@ -35,12 +35,12 @@ bool hasext(const char *exts, const char *ext)
     return false;
 }
 
-void glext(char *ext)
-{
-    const char *exts = (const char *)glGetString(GL_EXTENSIONS);
-    intret(hasext(exts, ext) ? 1 : 0);
-}
-COMMAND(glext, "s");
+// void glext(char *ext)
+// {
+//     const char *exts = (const char *)glGetString(GL_EXTENSIONS);
+//     intret(hasext(exts, ext) ? 1 : 0);
+// }
+// COMMAND(glext, "s");
 
 VAR(ati_mda_bug, 0, 0, 1);
 
@@ -97,20 +97,16 @@ void gl_checkextensions()
 
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
 {
-    //#define fogvalues 0.5f, 0.6f, 0.7f, 1.0f
-
     glViewport(0, 0, w, h);
     glClearDepth(1.0);
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
 
-
     glEnable(GL_FOG);
     glFogi(GL_FOG_MODE, GL_LINEAR);
     glFogf(GL_FOG_DENSITY, 0.25);
     glHint(GL_FOG_HINT, GL_NICEST);
-
 
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
@@ -184,7 +180,6 @@ void line(int x1, int y1, int x2, int y2, color *c)
     glEnd();
     glEnable(GL_BLEND);
 }
-
 
 void linestyle(float width, int r, int g, int b)
 {
