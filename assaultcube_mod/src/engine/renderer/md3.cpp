@@ -293,7 +293,7 @@ void md3skin(char *objname, char *skin)
         if(!strcmp(objname, "*") || !strcmp(m.name, objname))
         {
             defformatstring(spath)("%s/%s", md3dir, skin);
-            m.skin = textureload(spath);
+            m.skin = g_TextureMgr.load(spath);
         }
     }
 }

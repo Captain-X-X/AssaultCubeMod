@@ -24,7 +24,7 @@ void newfont(char *name, char *tex, int *defaultw, int *defaulth, int *offsetx, 
         f->name = name;
     }
 
-    f->tex = textureload(tex);
+    f->tex = g_TextureMgr.load(tex);
     f->chars.shrink(0);
     f->defaultw = *defaultw;
     f->defaulth = *defaulth;
@@ -266,10 +266,10 @@ int draw_char(font &f, font::charinfo &info, int charcode, int x, int y)
     glBindTexture(GL_TEXTURE_2D, f.tex->id);
     glBegin(GL_QUADS);
 */
-    float tc_left    = (info.x + f.offsetx) / float(f.tex->xs);
-    float tc_top     = (info.y + f.offsety) / float(f.tex->ys);
-    float tc_right   = (info.x + info.w + f.offsetw) / float(f.tex->xs);
-    float tc_bottom  = (info.y + info.h + f.offseth) / float(f.tex->ys);
+    float tc_left    = (info.x + f.offsetx) / float(f.tex->getWidth());
+    float tc_top     = (info.y + f.offsety) / float(f.tex->getHeight());
+    float tc_right   = (info.x + info.w + f.offsetw) / float(f.tex->getWidth());
+    float tc_bottom  = (info.y + info.h + f.offseth) / float(f.tex->getHeight());
 
     glTexCoord2f(tc_left,  tc_top   ); glVertex2f(x,          y);
     glTexCoord2f(tc_right, tc_top   ); glVertex2f(x + info.w, y);
@@ -550,8 +550,8 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
     bvec color(r, g, b);
     int colorpos = 0, cx = INT_MIN, cy = 0, cc = ' ';
     colorstack[0] = 'c'; //indicate user color
-    glBlendFunc(GL_SRC_ALPHA, curfont->tex->bpp==32 ? GL_ONE_MINUS_SRC_ALPHA : GL_ONE);
-    glBindTexture(GL_TEXTURE_2D, curfont->tex->id);
+    glBlendFunc(GL_SRC_ALPHA, curfont->tex->getBytesPerPixle()==32 ? GL_ONE_MINUS_SRC_ALPHA : GL_ONE);
+    glBindTexture(GL_TEXTURE_2D, curfont->tex->getId());
     glBegin(GL_QUADS);
     glColor4ub(color.x, color.y, color.z, a);
     TEXTSKELETON
@@ -737,6 +737,7 @@ void reloadfonts()
     //createutf8charset();
 
     enumerate(fonts, font, f,
-        if(!reloadtexture(*f.tex)) fatal("failed to reload font texture");
+        if(!g_TextureMgr.reload(*f.tex)) fatal("failed to reload font texture");
     );
+    
 }

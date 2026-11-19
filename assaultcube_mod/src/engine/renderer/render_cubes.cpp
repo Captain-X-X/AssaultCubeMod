@@ -65,7 +65,7 @@ void renderstrips()
     loopj(renderedtexs)
     {
         stripbatch &sb = stripbatches[j];
-        glBindTexture(GL_TEXTURE_2D, lookupworldtexture(sb.tex)->id);
+        glBindTexture(GL_TEXTURE_2D, lookupworldtexture(sb.tex)->getId());
         RENDERSTRIPS(sb.tris, GL_TRIANGLES);
         RENDERSTRIPS(sb.tristrips, GL_TRIANGLE_STRIP);
         RENDERSTRIPS(sb.quads, GL_QUADS);
@@ -130,7 +130,7 @@ int nquads;
 const float texturescale = 32.0f;
 //VARP(texturescale, 16, 32, 64);
 
-#define TEXTURESCALE (float(texturescale) * ((uniformtexres && t->scale>1.0f) ? 1.0f : t->scale))
+#define TEXTURESCALE (float(texturescale) * ((uniformtexres && t->getScale()>1.0f) ? 1.0f : t->getScale()))
 
 int striptype = 0, striptex, oh, oy, ox, odir;                         // the o* vars are used by the stripification
 int ol1r, ol1g, ol1b, ol2r, ol2g, ol2b;
@@ -169,8 +169,8 @@ void render_flat(int wtex, int x, int y, int size, int h, sqr *l1, sqr *l4, sqr 
     if(showm) { l3 = l1 = &sbright; l4 = l2 = &sdark; }
 
     Texture *t = lookupworldtexture(wtex);
-    float xf = TEXTURESCALE/t->xs;
-    float yf = TEXTURESCALE/t->ys;
+    float xf = TEXTURESCALE/t->getWidth();
+    float yf = TEXTURESCALE/t->getHeight();
     float xs = size*xf;
     float ys = size*yf;
     float xo = xf*x;
@@ -246,8 +246,8 @@ void render_flatdelta(int wtex, int x, int y, int size, float h1, float h4, floa
     if(showm) { l3 = l1 = &sbright; l4 = l2 = &sdark; }
 
     Texture *t = lookupworldtexture(wtex);
-    float xf = TEXTURESCALE/t->xs;
-    float yf = TEXTURESCALE/t->ys;
+    float xf = TEXTURESCALE/t->getWidth();
+    float yf = TEXTURESCALE/t->getHeight();
     float xs = size*xf;
     float ys = size*yf;
     float xo = xf*x;
@@ -294,16 +294,16 @@ void render_2tris(sqr *h, sqr *s, int x1, int y1, int x2, int y2, int x3, int y3
     stripend(verts);
 
     Texture *t = lookupworldtexture(h->ftex);
-    float xf = TEXTURESCALE/t->xs;
-    float yf = TEXTURESCALE/t->ys;
+    float xf = TEXTURESCALE/t->getWidth();
+    float yf = TEXTURESCALE/t->getHeight();
     vert(x1, y1, h->floor, l1, xf*x1, yf*y1);
     vert(x2, y2, h->floor, l2, xf*x2, yf*y2);
     vert(x3, y3, h->floor, l3, xf*x3, yf*y3);
     addstrip(mergestrips ? GL_TRIANGLES : GL_TRIANGLE_STRIP, h->ftex, verts.length()-3, 3);
 
     t = lookupworldtexture(h->ctex);
-    xf = TEXTURESCALE/t->xs;
-    yf = TEXTURESCALE/t->ys;
+    xf = TEXTURESCALE/t->getWidth();
+    yf = TEXTURESCALE/t->getHeight();
 
     vert(x3, y3, h->ceil, l3, xf*x3, yf*y3);
     vert(x2, y2, h->ceil, l2, xf*x2, yf*y2);
@@ -332,8 +332,8 @@ void render_square(int wtex, float floor1, float floor2, float ceil1, float ceil
     if(showm) { l1 = &sbright; l2 = &sdark; }
 
     Texture *t = lookupworldtexture(wtex);
-    float xf = TEXTURESCALE/t->xs;
-    float yf = -TEXTURESCALE/t->ys;
+    float xf = TEXTURESCALE/t->getWidth();
+    float yf = -TEXTURESCALE/t->getHeight();
     float xs = size*xf;
     float xo = xf*(x1==x2 ? min(y1,y2) : min(x1,x2));
 

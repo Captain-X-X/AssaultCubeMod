@@ -1,7 +1,8 @@
-// texture.cpp: texture management
 #include "pch.h"
 #include "cube.h"
 #include "texture.h"
+#include "api/gl/glutil.h"
+
 #include "client/client.h"
 #include "lib/stb_image.h"
 
@@ -33,39 +34,34 @@ TextureManager g_TextureMgr;
 
 void scaletexture(uchar *src, uint sw, uint sh, uint bpp, uchar *dst, uint dw, uint dh)
 {
-    if(sw == dw*2 && sh == dh*2)
-    {
-        switch(bpp)
-        {
-            case 1: return halvetexture1(src, sw, sh, dst);
-            case 2: return halvetexture2(src, sw, sh, dst);
-            case 3: return halvetexture3(src, sw, sh, dst);
-            case 4: return halvetexture4(src, sw, sh, dst);
+    if(sw == dw*2 && sh == dh*2) {
+        switch(bpp) {
+        case 1: return halvetexture1(src, sw, sh, dst);
+        case 2: return halvetexture2(src, sw, sh, dst);
+        case 3: return halvetexture3(src, sw, sh, dst);
+        case 4: return halvetexture4(src, sw, sh, dst);
         }
     }
-    else if(sw < dw || sh < dh || sw&(sw-1) || sh&(sh-1))
-    {
-        switch(bpp)
-        {
-            case 1: return scaletexture1(src, sw, sh, dst, dw, dh);
-            case 2: return scaletexture2(src, sw, sh, dst, dw, dh);
-            case 3: return scaletexture3(src, sw, sh, dst, dw, dh);
-            case 4: return scaletexture4(src, sw, sh, dst, dw, dh);
+    else if(sw < dw || sh < dh || sw&(sw-1) || sh&(sh-1)) {
+        switch(bpp) {
+        case 1: return scaletexture1(src, sw, sh, dst, dw, dh);
+        case 2: return scaletexture2(src, sw, sh, dst, dw, dh);
+        case 3: return scaletexture3(src, sw, sh, dst, dw, dh);
+        case 4: return scaletexture4(src, sw, sh, dst, dw, dh);
         }
     }
-    else
-    {
-        switch(bpp)
-        {
-            case 1: return shifttexture1(src, sw, sh, dst, dw, dh);
-            case 2: return shifttexture2(src, sw, sh, dst, dw, dh);
-            case 3: return shifttexture3(src, sw, sh, dst, dw, dh);
-            case 4: return shifttexture4(src, sw, sh, dst, dw, dh);
+    else {
+        switch(bpp) {
+        case 1: return shifttexture1(src, sw, sh, dst, dw, dh);
+        case 2: return shifttexture2(src, sw, sh, dst, dw, dh);
+        case 3: return shifttexture3(src, sw, sh, dst, dw, dh);
+        case 4: return shifttexture4(src, sw, sh, dst, dw, dh);
         }
     }
 }
 
 Texture *notexture = NULL, *noworldtexture = NULL;
+Texture notexture_noptr, noworldtexture_noptr;
 
 VAR(hwtexsize, 1, 0, 0);
 VAR(hwmaxaniso, 1, 0, 0);
@@ -75,48 +71,30 @@ VARFP(trilinear, 0, 1, 1, initwarning("texture filtering", INIT_LOAD));
 VARFP(bilinear, 0, 1, 1, initwarning("texture filtering", INIT_LOAD));
 VARFP(aniso, 0, 0, 16, initwarning("texture filtering", INIT_LOAD));
 
-int formatsize(GLenum format)
-{
-    switch(format)
-    {
-        case GL_LUMINANCE:
-        case GL_ALPHA: return 1;
-        case GL_LUMINANCE_ALPHA: return 2;
-        case GL_RGB: return 3;
-        case GL_RGBA: return 4;
-        default: return 4;
-    }
-}
-
 void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int &tw, int &th)
 {
     int hwlimit = hwtexsize,
         sizelimit = mipmap && maxtexsize ? min(maxtexsize, hwlimit) : hwlimit;
-    if(canreduce && texreduce)
-    {
-        if(texreduce==-1)
-        {
+    if(canreduce && texreduce) {
+        if(texreduce==-1) {
             w = 2;
             h = 2;
         }
-        else
-        {
+        else {
             w = max(w>>texreduce, 2); // 1);
             h = max(h>>texreduce, 2); // 1);
         }
     }
     w = min(w, sizelimit);
     h = min(h, sizelimit);
-    if(mipmap || w&(w-1) || h&(h-1))
-    {
+    if(mipmap || w&(w-1) || h&(h-1)) {
         tw = th = 1;
         while(tw < w) tw *= 2;
         while(th < h) th *= 2;
         if(w < tw - tw/4) tw /= 2;
         if(h < th - th/4) th /= 2;
     }
-    else
-    {
+    else {
         tw = w;
         th = h;
     }
@@ -127,7 +105,9 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipmap,
     glBindTexture(GL_TEXTURE_2D, tnum);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp&1 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp&2 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    if(hasAF && min(aniso, hwmaxaniso) > 0 && mipmap) glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, min(aniso, hwmaxaniso));
+    if(hasAF && min(aniso, hwmaxaniso) > 0 && mipmap) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, min(aniso, hwmaxaniso));
+    }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
         mipmap ?
@@ -137,18 +117,18 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipmap,
             (bilinear ? GL_LINEAR : GL_NEAREST));
 
     int tw = w, th = h;
-    if(pixels) resizetexture(w, h, mipmap, canreduce, GL_TEXTURE_2D, tw, th);
+    if(pixels) {
+        resizetexture(w, h, mipmap, canreduce, GL_TEXTURE_2D, tw, th);
+    }
     ///////////////////
-    int bpp = formatsize(format);
+    unsigned int bpp = GL_GetTextureFormatSize(format);
     uchar *buf = NULL;
-    if(w!=tw || h!=th)
-    {
+    if(w!=tw || h!=th) {
         buf = new uchar[tw*th*bpp];
         scaletexture((uchar *)pixels, w, h, bpp, buf, tw, th);
     }
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    for(int level = 0;; level++)
-    {
+    for(int level = 0;; level++) {
         uchar *src = buf ? buf : (uchar *)pixels;
         glTexImage2D(GL_TEXTURE_2D, level, format, tw, th, 0, format, GL_UNSIGNED_BYTE, src);
         if(!mipmap || max(tw, th) <= 1) break;
@@ -158,7 +138,9 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipmap,
         if(!buf) buf = new uchar[tw*th*bpp];
         scaletexture(src, srcw, srch, bpp, buf, tw, th);
     }
-    if(buf) delete[] buf;
+    if(buf) {
+        delete[] buf;
+    }
 }
 
 bool silent_texture_load = false;
@@ -180,153 +162,157 @@ GLuint loadsurface(const char *texname, int &xs, int &ys, int &bpp, int clamp = 
 {
     unsigned char* data = stbi_load(texname, &xs, &ys, &bpp, 0);
     if (!data) {
-        printf("Failed to load texture: %s\n", texname);
+        // printf("Failed to load texture: %s\n", texname);
         return 0;
     }
     bpp = bpp*8;
     GLenum format = GL_RGBA;
-    // if (bpp == 1) format = GL_RED;
-    // else if (bpp == 3) format = GL_RGB;
     format = texformat(bpp);
     GLuint id;
     glGenTextures(1, &id);
     createtexture(id, xs, ys, (void*)data, clamp, mipmap, canreduce, format);
     stbi_image_free(data);
-    // printf("Texture loaded: %s [id=%u, size=%dx%d]\n", texname, id, xs, ys);
     return id;
-
-}
-
-// management of texture textureSlot_ts
-// each texture textureSlot_t can have multiple texture frames, of which currently only the first is used
-// additional frames can be used for various shaders
-
-Texture *textureload(const char *name, int clamp, bool mipmap, bool canreduce, float scale, bool trydl)
-{
-    string pname;
-    copystring(pname, name);
-    path(pname);
-    Texture *t = g_TextureMgr.textures.access(pname);
-    if(t) return t;
-    int xs, ys, bpp;
-    GLuint id = loadsurface(pname, xs, ys, bpp, clamp, mipmap, canreduce, scale, trydl);
-    if(!id) return notexture;
-    char *key = newstring(pname);
-    t = &g_TextureMgr.textures[key];
-    t->name = key;
-    t->xs = xs;
-    t->ys = ys;
-    t->bpp = bpp;
-    t->clamp = clamp;
-    t->mipmap = mipmap;
-    t->canreduce = canreduce;
-    t->id = id;
-    t->scale = scale;
-    return t;
 }
 
 void texturereset() 
 { 
     if(execcontext==IEXC_MAPCFG) {
-        g_TextureMgr.slots.setsize(0); 
+        g_TextureMgr.reset(true); 
     }
 }
 COMMAND(texturereset, "");
 
 void texture(float *scale, char *name)
 {
-    textureSlot_t &s = g_TextureMgr.slots.add();
-    copystring(s.name, name);
-    path(s.name);
-    s.tex = NULL;
-    s.loaded = false;
-    s.scale = (*scale > 0 && *scale <= 2.0f) ? *scale : 1.0f;
+    std::string textureFilePath = "packages/textures/" + std::string(name);
+    Texture tex0;
+    tex0.preset(textureFilePath, 0, true, false, (*scale > 0 && *scale <= 2.0f) ? *scale : 1.0f);
+    g_TextureMgr.add(tex0, true);
 }
 COMMAND(texture, "fs");
-
-Texture *lookuptexture(int tex, Texture *failtex, bool trydl)
-{
-    return g_TextureMgr.get(tex, failtex, trydl);
-}
-
-void cleanuptextures()
-{
-    g_TextureMgr.Destroy();
-}
-
-bool reloadtexture(Texture &t)
-{
-    return g_TextureMgr.reload(t);
-}
-
-bool reloadtexture(const char *name)
-{
-    return g_TextureMgr.reload(name);
-}
-
-void reloadtextures()
-{
-    g_TextureMgr.reloadAll();
-}
 
 /*
 * ==========
 * 
 * ==========
 */
-Texture::Texture()
+void Texture::scaleTexture()
 {
-    this->id = 0;
+    uint dw = m_width * m_scale, dh = m_height * m_scale;
+    uchar *buf = new uchar[dw*dh*m_bpp];
+    scaletexture(m_pixels, m_width, m_height, m_bpp, buf, dw, dh);
+    // delete[] (uchar *)s->pixels;
+    m_width = dw;
+    m_height = dh;
+    m_pixels = buf;
+}
+
+Texture::Texture()
+    : m_id(0), m_preset(false)
+{
+
 }
 
 Texture::~Texture()
 {
-
+    // destroy();
 }
 
-bool Texture::load(const char* t_name, int t_clamp, bool t_mipmap, bool t_canreduce, float t_scale, bool t_trydl)
+void Texture::preset(const std::string& file, int clamp, bool mipmap, bool canreduce, float scale)
 {
-    string pname;
-    copystring(pname, t_name);
-    path(pname);
-    unsigned char* data = stbi_load(pname, &xs, &ys, &bpp, 0);
+    m_file = file;
+    m_clamp = clamp;
+    m_mipmap = mipmap;
+    m_canreduce = canreduce;
+    m_id = 0;
+    m_scale = scale;
+    m_preset = true;
+}
+
+bool Texture::load(const std::string& file, int clamp, bool mipmap, bool canreduce, float scale)
+{
+    m_file = file;
+    m_clamp = clamp;
+    m_mipmap = mipmap;
+    m_canreduce = canreduce;
+    
+    unsigned char* data = stbi_load(file.c_str(), &m_width, &m_height, &m_bpp, 0);
     if (!data) {
-        printf("fail to load texture: %s\n", pname);
-        return 0;
-    }
-
-    clamp = t_clamp;
-    mipmap = t_mipmap;
-    canreduce = t_canreduce;
-    scale = t_scale;
-    bpp = bpp*8;
-
-    GLenum format = GL_RGBA;
-    format = texformat(bpp);
-    glGenTextures(1, &id);
-    createtexture(id, xs, ys, (void*)data, clamp, mipmap, canreduce, format);
-    stbi_image_free(data);
-
-    if(!id) {
+        printf("fail to load texture: %s\n", file.c_str());
         return false;
     }
+    
+    m_bpp = m_bpp*8;
+    GLenum format = GL_RGBA;
+    format = texformat(m_bpp);
+    glGenTextures(1, &m_id);
+    createtexture(m_id, m_width, m_height, (void*)data, clamp, mipmap, canreduce, format);
 
-    char *key = newstring(pname);
-    this->name = key;
+    // m_scale = scale / 1.0f;
+    // if(uniformtexres && scale > 1.0f) scaleTexture();
+    m_scale = scale;
+
+    stbi_image_free(data);
+
+    if(m_id == NULL) {
+        // destroy();
+        return false;
+    }
     return true;
 }
 
 bool Texture::load()
 {
+    if (m_preset) {
+        m_preset = false;
+        return load(m_file, m_clamp, m_mipmap, m_canreduce, m_scale);
+    }
+    return false;
+}
 
+bool Texture::reload()
+{
+    if (m_file.empty()) {
+        return false;
+    }
+
+    if (isValid()) {
+        destroy();
+    }
+    return load(m_file.c_str(), m_clamp, m_mipmap, m_canreduce);
 }
 
 void Texture::destroy()
 {
-    if (this->id != 0) {
-        glDeleteTextures(1, &this->id);
-        this->id = 0;
+    if (m_id != 0) {
+        // printf("texture: %d destroyed!\n", m_id);
+        glDeleteTextures(1, &m_id);
+        m_id = 0;
     }
+}
+
+bool Texture::isValid() const
+{
+    if (m_id == NULL) {
+        return false;
+    }
+    return true;
+}
+
+bool Texture::isPreset() const
+{
+    return m_preset;
+}
+
+unsigned int Texture::getId() const
+{
+    return m_id;
+}
+
+const std::string& Texture::getFileName() const
+{
+    return m_file;
 }
 
 /*
@@ -335,72 +321,146 @@ void Texture::destroy()
 * ==========
 */
 TextureManager::TextureManager()
+    : m_mloutput(false)
 {
 
 }
 
 TextureManager::~TextureManager()
 {
-
+    shutdown();
 }
 
-void TextureManager::Destroy()
+void TextureManager::shutdown()
 {
-    enumerate(g_TextureMgr.textures, Texture, t,
-        if(t.id) { glDeleteTextures(1, &t.id); t.id = 0; }
-    );
-}
-
-Texture* TextureManager::load(const char *name, int clamp, bool mipmap, bool canreduce, float scale, bool trydl)
-{
-
-}
-
-Texture* TextureManager::get(int tex, Texture* failtex, bool trydl)
-{
-    Texture *t = failtex;
-    if(slots.inrange(tex)) {
-        textureSlot_t &s = slots[tex];
-        if(!s.loaded) {
-            defformatstring(pname)("packages/textures/%s", s.name);
-            s.tex = textureload(pname, 0, true, true, s.scale, trydl);
-            if(!trydl)
-            {
-            if(s.tex==notexture) s.tex = failtex;
-            s.loaded = true;
-        }
-        }
-        if(s.tex) {
-            t = s.tex;
+    for (size_t i = 0; i < m_textures.size(); i++) {
+        if (m_textures[i]) {
+            m_textures[i]->destroy();
         }
     }
-    return t;
+}
+
+void TextureManager::reset(bool delayedLoadTexture, bool deleteTextures)
+{
+    if (delayedLoadTexture) {
+        m_texturesDelayedLoad.clear();
+    }
+    else {
+        m_textures.clear();
+    }
+    printf("================texture manager has reset!\n");
+}
+
+void TextureManager::add(Texture& tex, bool isDelayedLoadTexture)
+{
+    if (isDelayedLoadTexture) {
+        m_texturesDelayedLoad.push_back(std::make_shared<Texture>(tex));
+        return;
+    }
+    m_textures.push_back(std::make_shared<Texture>(tex));
+}
+
+Texture* TextureManager::load(const std::string& file, int clamp, bool mipmap, bool canreduce, float scale)
+{
+    Texture* pTextureFind = getByFileName(file);
+    if (pTextureFind != nullptr){
+        return pTextureFind;
+    }
+
+    Texture tex0;
+    if (!tex0.load(file, clamp, mipmap, canreduce, scale)) {
+        return notexture;
+    }
+    m_textures.push_back(std::make_shared<Texture>(tex0));
+    printf("[%ld] added texture: %s\n", m_textures.size(), file.c_str());
+    return m_textures.back().get();
+}
+
+Texture* TextureManager::get(unsigned int textureIndex)
+{
+    if (m_textures.size() > textureIndex) {
+        if (m_textures[textureIndex]->isPreset()) {
+            m_textures[textureIndex]->load();
+        }
+        return m_textures[textureIndex].get();
+    }
+
+    if (m_mloutput) {
+        printf("check: failed to get texture: %d ... %d\n", textureIndex, m_textures.size());
+    }
+    return nullptr;
+}
+
+Texture* TextureManager::getByFileName(const std::string& fileName)
+{
+    for (size_t i = 0; i < m_textures.size(); i++) {
+        if (m_textures[i]) {
+            // printf("texture check = %s != %s\n", fileName.c_str(), m_textures[i]->getFileName().c_str());
+            if (m_textures[i]->getFileName() == fileName) {
+                // return m_textures[i].get();
+            }
+        }
+    }
+    if (m_mloutput) {
+        printf("check: failed to get texture: %s\n", fileName.c_str());
+    }
+    return nullptr;
+}
+
+Texture* TextureManager::getDelayedLoadTexture(unsigned int textureIndex)
+{
+    if (m_texturesDelayedLoad.size() > textureIndex) {
+        if (m_texturesDelayedLoad[textureIndex]->isPreset()) {
+            m_texturesDelayedLoad[textureIndex]->load();
+        }
+        return m_texturesDelayedLoad[textureIndex].get();
+    }
+
+    if (m_mloutput) {
+        printf("check dlt: failed to get texture: %d ... %d\n", textureIndex, m_texturesDelayedLoad.size());
+    }
+    return nullptr;
 }
 
 bool TextureManager::reload(Texture &t)
 {
-    if(t.id) return true;
-    int xs = 1, ys = 1, bpp = 0;
-    t.id = loadsurface(t.name, xs, ys, bpp, t.clamp, t.mipmap, t.canreduce, t.scale);
-    t.xs = xs;
-    t.ys = ys;
-    t.bpp = bpp;
-    return t.id!=0;
+    if(t.isValid()) {
+        return true;
+    }
+    return t.reload();
 }
 
 bool TextureManager::reload(const char *name)
 {
-    Texture *t = g_TextureMgr.textures.access(path(name, true));
-    if(t) return reloadtexture(*t);
+    for (size_t i = 0; i < m_textures.size(); i++) {
+        if (m_textures[i]) {
+            if (m_textures[i]->getFileName() == name) {
+                return m_textures[i]->reload();
+            }
+        }
+    }
     return false;
 }
 
 void TextureManager::reloadAll()
 {
-    enumerate(g_TextureMgr.textures, Texture, t, reloadtexture(t));
+    for (size_t i = 0; i < m_textures.size(); i++) {
+        if (m_textures[i]) {
+            m_textures[i]->reload();
+        }
+    }
 }
 
-Texture *sky[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+Texture* lookupworldtexture(int tex, bool trydl)
+{
+    Texture* pReturnTexture = g_TextureMgr.getDelayedLoadTexture(tex);
+    if (pReturnTexture == nullptr) {
+        return noworldtexture;
+    }
+    return pReturnTexture;
+}
+
+Texture sky[6];
 static string skybox;
 
 void loadsky(char *basename, bool reload)
@@ -411,7 +471,7 @@ void loadsky(char *basename, bool reload)
     loopi(6)
     {
         defformatstring(name)("packages/%s_%s.jpg", basename, side[i]);
-        sky[i] = textureload(name, 3);
+        sky[i].load(name, 3);
         // if(sky[i] == notexture && !reload && autodownload)
         // {
         //     // defformatstring(dl)("packages/%s", basename);
@@ -420,16 +480,18 @@ void loadsky(char *basename, bool reload)
         // }
     }
 }
-
 COMMANDF(loadsky, "s", (char *name) { loadsky(name, false); intret(0); });
+
 void loadnotexture(char *c)
 {
     noworldtexture = notexture; // reset to default
-    if(c[0])
-    {
+    if(c[0]) {
         defformatstring(p)("packages/textures/%s", c);
-        noworldtexture = textureload(p);
-        if(noworldtexture==notexture) conoutf("could not load alternative texture '%s'.", p);
+        noworldtexture_noptr.load(p);
+        noworldtexture = &noworldtexture_noptr;
+        if(noworldtexture==notexture) {
+            conoutf("could not load alternative texture '%s'.", p);
+        }
     }
 }
 COMMAND(loadnotexture, "s");
@@ -440,7 +502,7 @@ void draw_envbox_face(float s0, float t0, float x0, float y0, float z0,
                       float s3, float t3, float x3, float y3, float z3,
                       Texture *tex)
 {
-    glBindTexture(GL_TEXTURE_2D, tex->id);
+    glBindTexture(GL_TEXTURE_2D, tex->getId());
     glBegin(GL_TRIANGLE_STRIP);
     glTexCoord2f(s3, t3); glVertex3f(x3, y3, z3);
     glTexCoord2f(s2, t2); glVertex3f(x2, y2, z2);
@@ -469,33 +531,33 @@ void draw_envbox(int w)
     draw_envbox_face(0.0f, 0.0f, -w, -w, -w,
                      1.0f, 0.0f, -w,  w, -w,
                      1.0f, vclip, -w,  w,  z,
-                     0.0f, vclip, -w, -w,  z, sky[0] ? sky[0] : notexture);
+                     0.0f, vclip, -w, -w,  z, sky[0].isValid() ? &sky[0] : notexture);
 
     draw_envbox_face(1.0f, vclip, +w, -w,  z,
                      0.0f, vclip, +w,  w,  z,
                      0.0f, 0.0f, +w,  w, -w,
-                     1.0f, 0.0f, +w, -w, -w, sky[1] ? sky[1] : notexture);
+                     1.0f, 0.0f, +w, -w, -w, sky[1].isValid() ? &sky[1] : notexture);
 
     draw_envbox_face(1.0f, vclip, -w, -w,  z,
                      0.0f, vclip,  w, -w,  z,
                      0.0f, 0.0f,  w, -w, -w,
-                     1.0f, 0.0f, -w, -w, -w, sky[2] ? sky[2] : notexture);
+                     1.0f, 0.0f, -w, -w, -w, sky[2].isValid() ? &sky[2] : notexture);
 
     draw_envbox_face(1.0f, vclip, +w,  w,  z,
                      0.0f, vclip, -w,  w,  z,
                      0.0f, 0.0f, -w,  w, -w,
-                     1.0f, 0.0f, +w,  w, -w, sky[3] ? sky[3] : notexture);
+                     1.0f, 0.0f, +w,  w, -w, sky[3].isValid() ? &sky[3] : notexture);
 
     if(!zclip)
         draw_envbox_face(0.0f, 1.0f, -w,  w,  w,
                          0.0f, 0.0f, +w,  w,  w,
                          1.0f, 0.0f, +w, -w,  w,
-                         1.0f, 1.0f, -w, -w,  w, sky[4] ? sky[4] : notexture);
+                         1.0f, 1.0f, -w, -w,  w, sky[4].isValid() ? &sky[4] : notexture);
 
     draw_envbox_face(0.0f, 1.0f, +w,  w, -w,
                      0.0f, 0.0f, -w,  w, -w,
                      1.0f, 0.0f, -w, -w, -w,
-                     1.0f, 1.0f, +w, -w, -w, sky[5] ? sky[5] : notexture);
+                     1.0f, 1.0f, +w, -w, -w, sky[5].isValid() ? &sky[5] : notexture);
 
     glDepthMask(GL_TRUE);
 
@@ -546,8 +608,8 @@ VAR(maxtmus, 1, 0, 0);
 void parsetmufunc(tmufunc &f, const char *s)
 {
     int arg = -1;
-    while(*s) switch(tolower(*s++))
-    {
+    while(*s) {
+        switch(tolower(*s++)) {
         case 't': f.sources[++arg] = GL_TEXTURE; f.ops[arg] = GL_SRC_COLOR; break;
         case 'p': f.sources[++arg] = GL_PREVIOUS_ARB; f.ops[arg] = GL_SRC_COLOR; break;
         case 'k': f.sources[++arg] = GL_CONSTANT_ARB; f.ops[arg] = GL_SRC_COLOR; break;
@@ -562,14 +624,14 @@ void parsetmufunc(tmufunc &f, const char *s)
         case '@': f.combine = GL_INTERPOLATE_ARB; break;
         case '.': f.combine = GL_DOT3_RGB_ARB; break;
         case 'x': while(!isdigit(*s)) s++; f.scale = *s++-'0'; break;
+        }
     }
 }
 
 void committmufunc(bool rgb, tmufunc &dst, tmufunc &src)
 {
     if(dst.combine!=src.combine) glTexEnvi(GL_TEXTURE_ENV, rgb ? GL_COMBINE_RGB_ARB : GL_COMBINE_ALPHA_ARB, src.combine);
-    loopi(3)
-    {
+    for (int i = 0; i < 3; i++) {
         if(dst.sources[i]!=src.sources[i]) glTexEnvi(GL_TEXTURE_ENV, (rgb ? GL_SOURCE0_RGB_ARB : GL_SOURCE0_ALPHA_ARB)+i, src.sources[i]);
         if(dst.ops[i]!=src.ops[i]) glTexEnvi(GL_TEXTURE_ENV, (rgb ? GL_OPERAND0_RGB_ARB : GL_OPERAND0_ALPHA_ARB)+i, src.ops[i]);
     }
@@ -633,13 +695,13 @@ void inittmus()
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &val);
     hwtexsize = val;
 
-    if(hasTE && !hasMT) maxtmus = 1;
-    else if(hasTE && hasMT)
-    {
+    if(hasTE && !hasMT) {
+        maxtmus = 1;
+    }
+    else if(hasTE && hasMT) {
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &val);
         maxtmus = max(1, min(MAXTMUS, int(val)));
-        loopi(maxtmus)
-        {
+        for (int i = 0; i < maxtmus; i++) {
             glActiveTexture(GL_TEXTURE0_ARB+i);
             resettmu(i);
         }
@@ -653,44 +715,36 @@ void cleanuptmus()
     loopi(MAXTMUS) tmus[i] = invalidtmu;
 }
 
-
 Texture *e_wall = NULL, *e_floor = NULL, *e_ceil = NULL;
 
 void guidetoggle()
 {
-    if(player1->state == CS_EDITING)
-    {
-        textureSlot_t *sw = &g_TextureMgr.slots[DEFAULT_WALL];
-        textureSlot_t *sf = &g_TextureMgr.slots[DEFAULT_FLOOR];
-        textureSlot_t *sc = &g_TextureMgr.slots[DEFAULT_CEIL];
+    if(player1->state == CS_EDITING) {
+        // Texture *sw = &g_TextureMgr.slots[DEFAULT_WALL];
+        // Texture *sf = &g_TextureMgr.slots[DEFAULT_FLOOR];
+        // Texture *sc = &g_TextureMgr.slots[DEFAULT_CEIL];
 
         //if textures match original texture
-        if(e_wall == NULL || e_floor == NULL || e_ceil == NULL)
-        {
+        if(e_wall == NULL || e_floor == NULL || e_ceil == NULL) {
             //replace defaults with grid texures
-            e_wall = sw->tex;
-            e_floor = sf->tex;
-            e_ceil = sc->tex;
-            sw->tex = textureload("packages/textures/map_editor/wall.png");
-            sf->tex = textureload("packages/textures/map_editor/floor.png");
-            sc->tex = textureload("packages/textures/map_editor/ceil.png");
+            e_wall = g_TextureMgr.load("packages/textures/map_editor/wall.png");
+            e_floor = g_TextureMgr.load("packages/textures/map_editor/floor.png");
+            e_ceil = g_TextureMgr.load("packages/textures/map_editor/ceil.png");
             conoutf("Guide: \f0on");
         }
-        else
-        {
-            // restore textures
-            if(e_wall) sw->tex = e_wall;
-            if(e_floor) sf->tex = e_floor;
-            if(e_ceil) sc->tex = e_ceil;
+        else {
+            // // restore textures
+            // if(e_wall) sw->tex = e_wall;
+            // if(e_floor) sf->tex = e_floor;
+            // if(e_ceil) sc->tex = e_ceil;
             e_wall = NULL;
             e_floor = NULL;
             e_ceil = NULL;
             conoutf("Guide: \fBoff");
         }
     }
-    else
-    {
-        conoutf("\fBGuide view is only avaiable when editing.");
+    else {
+        // conoutf("\fBGuide view is only avaiable when editing.");
     }
 }
 

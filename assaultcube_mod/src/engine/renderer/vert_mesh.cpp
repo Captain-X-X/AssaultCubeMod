@@ -290,15 +290,15 @@ void mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
 {
     if(!(as.anim&ANIM_NOSKIN))
     {
-        GLuint id = tex < 0 ? -tex : skin->id;
-        if(tex > 0) id = lookuptexture(tex)->id;
+        GLuint id = tex < 0 ? -tex : skin->getId();
+        if(tex > 0) id = g_TextureMgr.get(tex)->getId();
         if(id != model::lasttex)
         {
             glBindTexture(GL_TEXTURE_2D, id);
             model::lasttex = id;
         }
         if(model::enablealphablend) { glDisable(GL_BLEND); model::enablealphablend = false; }
-        if(skin->bpp == 32 && owner->model->alphatest > 0)
+        if(skin->getBytesPerPixle() == 32 && owner->model->alphatest > 0)
         {
             if(!model::enablealphatest) { glEnable(GL_ALPHA_TEST); model::enablealphatest = true; }
             if(model::lastalphatest != owner->model->alphatest)

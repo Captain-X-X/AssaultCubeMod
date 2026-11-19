@@ -295,13 +295,13 @@ struct mitemimagemanual : mitemmanual
 
     mitemimagemanual(gmenu *parent, const char *filename, const char *altfontname, char *text, char *action, char *hoveraction, color *bgcolor, const char *desc = NULL) : mitemmanual(parent, text, action, hoveraction, bgcolor, desc), filename(filename)
     {
-        image = filename ? textureload(filename, 3) : NULL;
+        image = filename ? g_TextureMgr.load(filename, 3) : NULL;
         altfont = altfontname ? getfont(altfontname) : NULL;
     }
     virtual ~mitemimagemanual() {}
     virtual int width()
     {
-        if(image && *text != '\t') return (FONTH*image->xs)/image->ys + FONTH/2 + mitemmanual::width();
+        if(image && *text != '\t') return (FONTH*image->getWidth())/image->getHeight() + FONTH/2 + mitemmanual::width();
         return mitemmanual::width();
     }
     virtual void render(int x, int y, int w)
@@ -312,10 +312,10 @@ struct mitemimagemanual : mitemmanual
             int xs = 0;
             if(image)
             {
-                glBindTexture(GL_TEXTURE_2D, image->id);
+                glBindTexture(GL_TEXTURE_2D, image->getId());
                 glDisable(GL_BLEND);
                 glColor3f(1, 1, 1);
-                xs = (FONTH*image->xs)/image->ys;
+                xs = (FONTH*image->getWidth())/image->getHeight();
                 glBegin(GL_TRIANGLE_STRIP);
                 glTexCoord2f(0, 0); glVertex2f(x,    y);
                 glTexCoord2f(1, 0); glVertex2f(x+xs, y);
@@ -340,13 +340,13 @@ struct mitemimagemanual : mitemmanual
                 }
                 delete[] r;
             }
-            if(image && isselection() && !hidebigmenuimages && image->ys > FONTH)
+            if(image && isselection() && !hidebigmenuimages && image->getHeight() > FONTH)
             {
                 w += FONTH;
-                int xs = (2 * VIRTW - w) / 5, ys = (xs * image->ys) / image->xs;
+                int xs = (2 * VIRTW - w) / 5, ys = (xs * image->getHeight()) / image->getWidth();
                 x = (6 * VIRTW + w - 2 * xs) / 4; y = VIRTH - ys / 2;
                 blendbox(x - FONTH, y - FONTH, x + xs + FONTH, y + ys + FONTH, false);
-                glBindTexture(GL_TEXTURE_2D, image->id);               // I just copy&pasted this...
+                glBindTexture(GL_TEXTURE_2D, image->getId());               // I just copy&pasted this...
                 glDisable(GL_BLEND);
                 glColor3f(1, 1, 1);
                 glBegin(GL_TRIANGLE_STRIP);
@@ -415,17 +415,17 @@ struct mitemmaploadmanual : mitemmanual
             }
             defformatstring(p2p)("%s/preview/%s.jpg", cgzpath, mapname);
             silent_texture_load = true;
-            image = textureload(p2p, 3);
-            if(image==notexture) image = textureload("packages/misc/nopreview.jpg", 3);
+            image = g_TextureMgr.load(p2p, 3);
+            if(image==notexture) image = g_TextureMgr.load("packages/misc/nopreview.jpg", 3);
             silent_texture_load = false;
         }
-        else { formatstring(maptitle)("-n/a-:%s", filename); image = textureload("packages/misc/nopreview.png", 3); }
+        else { formatstring(maptitle)("-n/a-:%s", filename); image = g_TextureMgr.load("packages/misc/nopreview.png", 3); }
         copystring(mapstats, "");
     }
     virtual ~mitemmaploadmanual() {}
     virtual int width()
     {
-        if(image && *text != '\t') return (FONTH*image->xs)/image->ys + FONTH/2 + mitemmanual::width();
+        if(image && *text != '\t') return (FONTH*image->getWidth())/image->getHeight() + FONTH/2 + mitemmanual::width();
         return mitemmanual::width();
     }
     virtual void render(int x, int y, int w)
@@ -435,14 +435,14 @@ struct mitemmaploadmanual : mitemmanual
         {
             //int xs = 0;
             draw_text(text, x, y); // !image || *text == '\t' ? x : x+xs + FONTH/2
-            if(image && isselection() && !hidebigmenuimages && image->ys > FONTH)
+            if(image && isselection() && !hidebigmenuimages && image->getHeight() > FONTH)
             {
                 w += FONTH;
-                int xs = (2 * VIRTW - w) / 5, ys = (xs * image->ys) / image->xs;
+                int xs = (2 * VIRTW - w) / 5, ys = (xs * image->getHeight()) / image->getWidth();
                 x = (6 * VIRTW + w - 2 * xs) / 4; y = VIRTH - ys / 2;
 
                 blendbox(x - FONTH, y - FONTH, x + xs + FONTH, y + ys + FONTH, false);
-                glBindTexture(GL_TEXTURE_2D, image->id);               // I just copy&pasted this...
+                glBindTexture(GL_TEXTURE_2D, image->getId());               // I just copy&pasted this...
                 glDisable(GL_BLEND);
                 glColor3f(1, 1, 1);
                 glBegin(GL_TRIANGLE_STRIP);
@@ -1215,7 +1215,7 @@ void rendermenumdl()
     if(isplayermodel)
     {
         defformatstring(skin)("packages/models/%s.jpg", m.mdl);
-        tex = -(int)textureload(skin)->id;
+        tex = -(int)g_TextureMgr.load(skin)->getId();
     }
     modelattach a[2];
     if(isplayermodel)
@@ -1422,9 +1422,9 @@ void gmenu::render()
 void gmenu::renderbg(int x1, int y1, int x2, int y2, bool border)
 {
     static Texture *tex = NULL;
-    if(!tex) tex = textureload("packages/textures/makke/menu.jpg");
+    if(!tex) tex = g_TextureMgr.load("packages/textures/makke/menu.jpg");
     static color transparent(1, 1, 1, 0.75f);
-    blendbox(x1, y1, x2, y2, border, tex->id, allowinput ? NULL : &transparent);
+    blendbox(x1, y1, x2, y2, border, tex->getId(), allowinput ? NULL : &transparent);
 }
 
 // apply changes menu

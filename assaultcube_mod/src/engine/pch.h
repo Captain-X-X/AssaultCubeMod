@@ -28,6 +28,7 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <memory>
 
 #ifdef __GNUC__
 #include <new>

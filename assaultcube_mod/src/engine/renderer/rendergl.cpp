@@ -363,10 +363,12 @@ void renderaboveheadicon(playerent *p)
     glTranslatef(p->o.x, p->o.y, p->o.z+p->aboveeye);
     glRotatef(camera1->yaw-180, 0, 0, 1);
     glColor3f(1.0f, 0.0f, 0.0f);
-    static Texture *tex = NULL;
-    if(!tex) tex = textureload("packages/misc/com.png");
+    Texture* tex = g_TextureMgr.load("packages/misc/com.png");
+    // if(!tex) {
+    //     tex = textureload("packages/misc/com.png");
+    // }
     float s = aboveheadiconsize/100.0f;
-    quad(tex->id, vec(s/2.0f, 0.0f, s), vec(s/-2.0f, 0.0f, 0.0f), 0.0f, 0.0f, 1.0f, 1.0f);
+    quad(tex->getId(), vec(s/2.0f, 0.0f, s), vec(s/-2.0f, 0.0f, 0.0f), 0.0f, 0.0f, 1.0f, 1.0f);
     glDisable(GL_BLEND);
     glPopMatrix();
 }

@@ -545,7 +545,7 @@ int findanim(const char *name)
 
 void loadskin(const char *dir, const char *altdir, Texture *&skin) // model skin sharing
 {
-    #define ifnoload if((skin = textureload(path))==notexture)
+    #define ifnoload if((skin = g_TextureMgr.load(path))==notexture)
     defformatstring(path)("packages/models/%s/skin.jpg", dir);
     ifnoload
     {
@@ -613,12 +613,13 @@ void preload_entmodels()
 
 void preload_mapmodels(bool trydl)
 {
-    loopv(ents)
-    {
+    loopv(ents) {
         entity &e = ents[i];
         if(e.type!=MAPMODEL || !mapmodels.inrange(e.attr2)) continue;
         loadmodel(NULL, e.attr2, trydl);
-        if(e.attr4) lookuptexture(e.attr4, notexture, trydl);
+        if(e.attr4) {
+            g_TextureMgr.getDelayedLoadTexture(e.attr4);
+        }
     }
 }
 
@@ -808,7 +809,7 @@ void renderclient(playerent *d)
     defformatstring(widn)("modmdlvwep%d", d->weaponsel->type);
     if(d->weaponsel) formatstring(vwep)("weapons/%s/world", identexists(widn)?getalias(widn):d->weaponsel->info.modelname);
     else vwep[0] = 0;
-    renderclient(d, "playermodels", vwep[0] ? vwep : NULL, -(int)textureload(skin)->id);
+    renderclient(d, "playermodels", vwep[0] ? vwep : NULL, -(int)g_TextureMgr.load(skin)->getId());
 }
 
 void renderclients()

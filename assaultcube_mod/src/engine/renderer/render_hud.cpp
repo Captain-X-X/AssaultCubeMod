@@ -20,7 +20,7 @@ extern int mapdims[8];
 
 void drawicon(Texture *tex, float x, float y, float s, int col, int row, float ts)
 {
-    if(tex && tex->xs == tex->ys) quad(tex->id, x, y, s, ts*col, ts*row, ts);
+    if(tex && tex->getWidth() == tex->getHeight()) quad(tex->getId(), x, y, s, ts*col, ts*row, ts);
 }
 
 inline void turn_on_transparency(int alpha = 255)
@@ -33,7 +33,7 @@ inline void turn_on_transparency(int alpha = 255)
 void drawequipicon(float x, float y, int col, int row, float blend)
 {
     static Texture *tex = NULL;
-    if(!tex) tex = textureload("packages/misc/items.png", 4);
+    if(!tex) tex = g_TextureMgr.load("packages/misc/items.png", 4);
     if(tex)
     {
         turn_on_transparency();
@@ -47,7 +47,7 @@ VARP(radarentsize, 4, 12, 64);
 void drawradaricon(float x, float y, float s, int col, int row)
 {
     static Texture *tex = NULL;
-    if(!tex) tex = textureload("packages/misc/radaricons.png", 3);
+    if(!tex) tex = g_TextureMgr.load("packages/misc/radaricons.png", 3);
     if(tex)
     {
         glEnable(GL_BLEND);
@@ -59,9 +59,9 @@ void drawradaricon(float x, float y, float s, int col, int row)
 void drawctficon(float x, float y, float s, int col, int row, float ts, int alpha)
 {
     static Texture *ctftex = NULL, *htftex = NULL, *ktftex = NULL;
-    if(!ctftex) ctftex = textureload("packages/misc/ctficons.png", 3);
-    if(!htftex) htftex = textureload("packages/misc/htficons.png", 3);
-    if(!ktftex) ktftex = textureload("packages/misc/ktficons.png", 3);
+    if(!ctftex) ctftex = g_TextureMgr.load("packages/misc/ctficons.png", 3);
+    if(!htftex) htftex = g_TextureMgr.load("packages/misc/htficons.png", 3);
+    if(!ktftex) ktftex = g_TextureMgr.load("packages/misc/ktficons.png", 3);
     glColor4ub(255, 255, 255, alpha);
     if(m_htf)
     {
@@ -80,7 +80,7 @@ void drawctficon(float x, float y, float s, int col, int row, float ts, int alph
 void drawvoteicon(float x, float y, int col, int row, bool noblend)
 {
     static Texture *tex = NULL;
-    if(!tex) tex = textureload("packages/misc/voteicons.png", 3);
+    if(!tex) tex = g_TextureMgr.load("packages/misc/voteicons.png", 3);
     if(tex)
     {
         if(noblend) glDisable(GL_BLEND);
@@ -153,7 +153,7 @@ void drawsgpat(int w, int h)
 
     glEnable(GL_TEXTURE_2D);
     static Texture *pattex = NULL;
-    if(!pattex) pattex = textureload("packages/misc/sgpat.png", 4);
+    if(!pattex) pattex = g_TextureMgr.load("packages/misc/sgpat.png", 4);
     loopk(3)
     {
         switch(k)
@@ -192,10 +192,10 @@ void drawsgpat(int w, int h)
 void drawscope(bool preload)
 {
     static Texture *scopetex = NULL;
-    if(!scopetex) scopetex = textureload("packages/misc/scope.png", 3);
+    if(!scopetex) scopetex = g_TextureMgr.load("packages/misc/scope.png", 3);
     if(preload) return;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBindTexture(GL_TEXTURE_2D, scopetex->id);
+    glBindTexture(GL_TEXTURE_2D, scopetex->getId());
     glColor3ub(255, 255, 255);
 
     // figure out the bounds of the scope given the desired aspect ratio
@@ -276,8 +276,8 @@ Texture *crosshairs[CROSSHAIR_NUM] = { NULL }; // weapon specific crosshairs
 Texture *loadcrosshairtexture(const char *c)
 {
     defformatstring(p)("packages/crosshairs/%s", c);
-    Texture *crosshair = textureload(p, 3);
-    if(crosshair==notexture) crosshair = textureload("packages/crosshairs/default.png", 3);
+    Texture *crosshair = g_TextureMgr.load(p, 3);
+    if(crosshair==notexture) crosshair = g_TextureMgr.load("packages/crosshairs/default.png", 3);
     return crosshair;
 }
 
@@ -316,9 +316,9 @@ void drawcrosshair(playerent *p, int n, color *c, float size)
         if(!crosshair) crosshair = crosshairs[CROSSHAIR_DEFAULT] = loadcrosshairtexture("default.png");
     }
 
-    if(crosshair->bpp==32) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if(crosshair->getBytesPerPixle()==32) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     else glBlendFunc(GL_ONE, GL_ONE);
-    glBindTexture(GL_TEXTURE_2D, crosshair->id);
+    glBindTexture(GL_TEXTURE_2D, crosshair->getId());
     glColor3ub(255,255,255);
     if(c) glColor3f(c->r, c->g, c->b);
     else if(crosshairfx || n==CROSSHAIR_TEAMMATE)
@@ -737,16 +737,16 @@ void drawradar_vicinity(playerent *p, int w, int h)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor3f(1, 1, 1);
     static Texture *bordertex = NULL;
-    if(!bordertex) bordertex = textureload("packages/misc/compass-base.png", 3);
-    quad(bordertex->id, centerpos.x-halfviewsize-16, centerpos.y-halfviewsize-16, radarviewsize+32, 0, 0, 1, 1);
+    if(!bordertex) bordertex = g_TextureMgr.load("packages/misc/compass-base.png", 3);
+    quad(bordertex->getId(), centerpos.x-halfviewsize-16, centerpos.y-halfviewsize-16, radarviewsize+32, 0, 0, 1, 1);
     if(!hidecompass)
     {
         static Texture *compasstex = NULL;
-        if(!compasstex) compasstex = textureload("packages/misc/compass-rose.png", 3);
+        if(!compasstex) compasstex = g_TextureMgr.load("packages/misc/compass-rose.png", 3);
         glPushMatrix();
         glTranslatef(centerpos.x, centerpos.y, 0);
         glRotatef(-camera1->yaw, 0, 0, 1);
-        quad(compasstex->id, -halfviewsize-8, -halfviewsize-8, radarviewsize+16, 0, 0, 1, 1);
+        quad(compasstex->getId(), -halfviewsize-8, -halfviewsize-8, radarviewsize+16, 0, 0, 1, 1);
         glPopMatrix();
     }
 
@@ -763,8 +763,8 @@ void drawteamicons(int w, int h, bool spect)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor3f(1, 1, 1);
     static Texture *icons = NULL;
-    if(!icons) icons = textureload("packages/misc/teamicons.png", 3);
-    quad(icons->id, VIRTW-VIRTH/12-10, 10, VIRTH/12, team_base(spect ? players[player1->followplayercn]->team : player1->team) ? 0.5f : 0, 0, 0.49f, 1.0f);
+    if(!icons) icons = g_TextureMgr.load("packages/misc/teamicons.png", 3);
+    quad(icons->getId(), VIRTW-VIRTH/12-10, 10, VIRTH/12, team_base(spect ? players[player1->followplayercn]->team : player1->team) ? 0.5f : 0, 0, 0.49f, 1.0f);
 }
 
 int damageblendmillis = 0;
@@ -802,7 +802,7 @@ void drawscores()
     static float time=0;
     if(!medals_arrived) {time=0; return;} else if(time > 5){time=0; medals_arrived=0;}
     static Texture *tex = NULL;
-    if(!tex) tex = textureload("packages/misc/nice_medals.png", 4);
+    if(!tex) tex = g_TextureMgr.load("packages/misc/nice_medals.png", 4);
     time+=((float)(curtime))/1000;
     float vw=VIRTW*7/4,vh=VIRTH*7/4;
     glPushAttrib(GL_COLOR_BUFFER_BIT);
@@ -870,11 +870,11 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     if(lastmillis < damageblendmillis)
     {
         static Texture *damagetex = NULL;
-        if(!damagetex) damagetex = textureload("packages/misc/damage.png", 3);
+        if(!damagetex) damagetex = g_TextureMgr.load("packages/misc/damage.png", 3);
 
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, damagetex->id);
+        glBindTexture(GL_TEXTURE_2D, damagetex->getId());
         float fade = damagescreenalpha/100.0f;
         if(damageblendmillis - lastmillis < damagescreenfade)
             fade *= float(damageblendmillis - lastmillis)/damagescreenfade;
@@ -1161,10 +1161,12 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glMatrixMode(GL_MODELVIEW);
 }
 
+Texture* g_StartScreenTexture = nullptr;
 void loadingscreen(const char *fmt, ...)
 {
-    static Texture *logo = NULL;
-    if(!logo) logo = textureload("packages/misc/startscreen.png", 3);
+    if (g_StartScreenTexture == nullptr) {
+        g_StartScreenTexture = g_TextureMgr.load("packages/misc/startscreen.png", 3);;
+    }
 
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
@@ -1182,7 +1184,7 @@ void loadingscreen(const char *fmt, ...)
     loopi(fmt ? 1 : 2)
     {
         glClear(GL_COLOR_BUFFER_BIT);
-        quad(logo->id, (VIRTW-VIRTH)/2, 0, VIRTH, 0, 0, 1);
+        quad(g_StartScreenTexture->getId(), (VIRTW-VIRTH)/2, 0, VIRTH, 0, 0, 1);
         if(fmt)
         {
             glEnable(GL_BLEND);

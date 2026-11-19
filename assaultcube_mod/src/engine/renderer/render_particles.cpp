@@ -198,13 +198,13 @@ void particleinit()
 {
     loopi(MAXPARTYPES) parlist[i] = NULL;
 
-    parttex[0] = textureload("packages/misc/base.png");
-    parttex[1] = textureload("packages/misc/smoke.png");
-    parttex[2] = textureload("packages/misc/explosion.png");
-    parttex[3] = textureload("<decal>packages/misc/bullethole.png");
-    parttex[4] = textureload("packages/misc/blood.png");
-    parttex[5] = textureload("packages/misc/scorch.png");
-    parttex[6] = textureload("packages/misc/muzzleflash.jpg");
+    parttex[0] = g_TextureMgr.load("packages/misc/base.png");
+    parttex[1] = g_TextureMgr.load("packages/misc/smoke.png");
+    parttex[2] = g_TextureMgr.load("packages/misc/explosion.png");
+    parttex[3] = g_TextureMgr.load("<decal>packages/misc/bullethole.png");
+    parttex[4] = g_TextureMgr.load("packages/misc/blood.png");
+    parttex[5] = g_TextureMgr.load("packages/misc/scorch.png");
+    parttex[6] = g_TextureMgr.load("packages/misc/muzzleflash.jpg");
 }
 
 void cleanupparticles()
@@ -300,7 +300,7 @@ void render_particles(int time, int typemask)
         parttype &pt = parttypes[i];
         float sz = pt.sz*particlesize/100.0f;
 
-        if(pt.tex>=0) glBindTexture(GL_TEXTURE_2D, parttex[pt.tex]->id);
+        if(pt.tex>=0) glBindTexture(GL_TEXTURE_2D, parttex[pt.tex]->getId());
         else glDisable(GL_TEXTURE_2D);
         switch(pt.type)
         {

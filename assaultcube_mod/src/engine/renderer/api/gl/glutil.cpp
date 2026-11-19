@@ -69,3 +69,35 @@ unsigned int GL_CompileShader(const char* vertSrc, const char* fragSrc)
     // printf("Shader Created: %d\n", shaderId);
     return shaderId;
 }
+
+unsigned int GL_CreateTexture2D(unsigned char* pixles, int w, int h, unsigned int bpp, unsigned int minFilter, unsigned int magFilter, unsigned int wrapMode) 
+{
+    if (!pixles) {
+        return 0;
+    }
+
+    unsigned int id;
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_2D, id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+    glTexImage2D(GL_TEXTURE_2D, 0, bpp, w, h, 0, bpp, GL_UNSIGNED_BYTE, pixles);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return id;
+}
+
+unsigned int GL_GetTextureFormatSize(unsigned int format)
+{
+    switch(format) {
+    case GL_LUMINANCE:
+    case GL_ALPHA: return 1;
+    case GL_LUMINANCE_ALPHA: return 2;
+    case GL_RGB: return 3;
+    case GL_RGBA: return 4;
+    default: return 4;
+    }
+}

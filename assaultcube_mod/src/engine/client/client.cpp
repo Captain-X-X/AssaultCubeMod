@@ -292,12 +292,12 @@ void resetgl()
 
     extern void cleanupparticles();
     extern void cleanupmodels();
-    extern void cleanuptextures();
+    // extern void cleanuptextures();
     extern void cleanuptmus();
     extern void cleanupgl();
     cleanupparticles();
     cleanupmodels();
-    cleanuptextures();
+    g_TextureMgr.reset(true);
     cleanuptmus();
     cleanupgl();
     uniformtexres = !hirestextures;
@@ -321,17 +321,17 @@ void resetgl()
     );
 
     extern void reloadfonts();
-    extern void reloadtextures();
+    // extern void reloadtextures();
     c2skeepalive();
-    if(!reloadtexture(*notexture) ||
-       !reloadtexture("packages/misc/startscreen.png"))
+    if(!g_TextureMgr.reload(*notexture) ||
+       !g_TextureMgr.reload("packages/misc/startscreen.png"))
         fatal("failed to reload core texture");
     loadingscreen();
     c2skeepalive();
     restoregamma();
     c2skeepalive();
     reloadfonts();
-    reloadtextures();
+    g_TextureMgr.reloadAll();
     c2skeepalive();
     drawscope(true); // 2011feb05:ft: preload scope.png
     preload_playermodels();

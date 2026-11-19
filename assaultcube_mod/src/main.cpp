@@ -216,7 +216,7 @@ int main(int argc, char **argv)
     gl_checkextensions();
     gl_init(scr_w, scr_h, usedcolorbits, useddepthbits, usedfsaa);
 
-    notexture = noworldtexture = textureload("packages/misc/notexture.jpg");
+    notexture = noworldtexture = g_TextureMgr.load("packages/misc/notexture.jpg");
     if (!notexture) {
         fatal("could not find core textures (hint: run AssaultCube from the parent of the bin directory)");
     }
@@ -329,17 +329,17 @@ int main(int argc, char **argv)
         execute(initscript);
     }
 
-    gamestarts = max(1, gamestarts + 1);
-    if (autodownload && (gamestarts % 100 == 1)) {
-        sortpckservers();
-    }
+    // gamestarts = max(1, gamestarts + 1);
+    // if (autodownload && (gamestarts % 100 == 1)) {
+    //     sortpckservers();
+    // }
 
     initlog("mainloop");
 
     inputgrab(grabinput = true);
 
     inmainloop = true;
-
+    g_TextureMgr.m_mloutput = true;
     while (g_client.window.shouldClose()) {
         g_client.window.update();
 
