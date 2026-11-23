@@ -4,16 +4,9 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
-#include "texture.h"
 #include "maths/vector_maths.h"
-
-/*
-* ==========
-* pre def
-* ==========
-*/
-// struct Vector4;
-// class Texture;
+#include "../texture.h"
+#include "../api/gl/Shader.h"
 
 /*
 * ==========
@@ -37,6 +30,7 @@ protected:
 public:
     Texture* pTexture0;
     Vector4 colour;
+    Shader* m_pShader;
 
 public:
     Material();
@@ -46,11 +40,14 @@ public:
     void setName(const std::string& name);
     void setTexture0(Texture* tex0);
     void setColour(const Vector4& col);
+    void setShader(Shader* pShader);
 
     // getters
+    bool hasTexture() const;
     bool isValid() const;
     const std::string& getName() const;
     const int getid() const; // returns -1 if there is not a valid id
+    Shader* getShader() { return m_pShader; }
 };
 
 /*
@@ -63,6 +60,7 @@ class MaterialManager
 private:
     std::vector<std::shared_ptr<Material>> m_materials;
     std::unordered_map<std::string, size_t> m_materialNameIndexEditor;
+    Shader* m_pShaderDefault;
 
 public:
     MaterialManager();
@@ -70,11 +68,13 @@ public:
 
     // clear and deallocate vector memory
     void shutdown();
+    void createDefault();
 
     // add & return pointer to valid 
     Material* addMaterial(const Material& material);
     Material* getMaterial(const std::string& name);
     // Material* getMaterial(int id);
 };
+extern MaterialManager g_MaterialMgr;
 
 #endif

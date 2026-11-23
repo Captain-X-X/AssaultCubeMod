@@ -1,3 +1,8 @@
+/*
+* ==========
+* this will be moved this to api/gl/ when its been cleaned and the 3d renderer starts 
+* ==========
+*/
 #ifndef TEXTURE_H
 #define TEXTURE_H
 #pragma once
@@ -32,6 +37,7 @@ public:
     // load NOW...
     bool load(const std::string& file, int clamp = 0, bool mipmap = true, bool canreduce = false, float scale = 1.0f);
     bool load();
+    bool createImage(const std::string& name, unsigned char* data, int w, int h, unsigned int colourFormat);
     bool reload();
     void destroy();
 
@@ -42,6 +48,9 @@ public:
     int getWidth() const { return m_width; }
     int getHeight() const { return m_height; }
     float getScale() const { return m_scale; }
+    int getClamp() const { return m_clamp; }
+    int getMipMap() const { return m_mipmap; }
+    bool canReduce() const { return m_canreduce; }
     int getBytesPerPixle() const { return m_bpp; }
     const std::string& getFileName() const;
 };
@@ -50,17 +59,6 @@ extern Texture *notexture, *noworldtexture;
 extern bool silent_texture_load;
 extern bool uniformtexres;
 
-// struct TextureDelayedLoadInfo_s {
-//     int m_bpp;
-//     int m_width;
-//     int m_height;
-//     int m_clamp;
-//     float m_scale;
-//     bool m_mipmap;
-//     bool m_canreduce;
-//     std::string m_file;
-//     bool m_loaded;
-// };
 class TextureManager
 {
 public:
@@ -82,18 +80,13 @@ public:
     Texture* getDelayedLoadTexture(unsigned int textureIndex);
 
     bool reload(Texture &t);
-    bool reload(const char *name);
+    bool reload(const std::string& file);
     void reloadAll();
 };
 extern TextureManager g_TextureMgr;
 
 void scaletexture(uchar *src, uint sw, uint sh, uint bpp, uchar *dst, uint dw, uint dh);
 void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipmap, bool canreduce, GLenum format);
-// Texture *textureload(const char *name, int clamp = 0, bool mipmap = true, bool canreduce = false, float scale = 1.0f, bool trydl = false);
-// Texture *lookuptexture(int tex, Texture *failtex = notexture, bool trydl = false);
-// bool reloadtexture(Texture &t);
-// bool reloadtexture(const char *name);
-// void reloadtextures();
 Texture* lookupworldtexture(int tex, bool trydl = true);
 
 /*

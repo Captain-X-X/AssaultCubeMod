@@ -15,9 +15,15 @@ uniform mat4 u_ViewMatrix;
 
 void main()
 {
-    gl_Position = u_ViewMatrix * vec4(aPosition, 1.0f);
+    gl_Position = u_ViewMatrix * vec4(aPosition, 1.0);
+    //gl_Position = vec4(
+    //    aPosition.xy / 100.0 - 1.0,
+    //    0.0,
+    //    1.0
+    //);
     vPosition = aPosition;
     vColour = aColour;
+    //vColour = vec4(0.0, 1.0, 1.0, 1.0);
     vUV = aUv;
     //vTextureid = aTextureid;
 }

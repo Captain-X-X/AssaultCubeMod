@@ -1,5 +1,5 @@
-#ifndef CMEAABB_H
-#define CMEAABB_H
+#ifndef AABB_H
+#define AABB_H
 #include "vector_maths.h"
 
 struct aabb_s {

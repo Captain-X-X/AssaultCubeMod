@@ -16,50 +16,13 @@
 #include "engine/menus.h"
 #include "engine/scoreboard.h"
 
-#include "engine/client/window.h"
+#include "engine/client/Window.h"
 
-#include "engine/renderer/api/gl/vertexbuffer.h"
-#include "engine/renderer/api/gl/vertexarray.h"
-#include "engine/renderer/api/gl/indexbuffer.h"
-#include "engine/renderer/api/gl/shader.h"
-
-#ifdef WIN32
-static char *parsecommandline(const char *src, vector<char *> &args)
-{
-    char *buf = new char[strlen(src) + 1], *dst = buf;
-    for (;;)
-    {
-        while (isspace(*src))
-            src++;
-        if (!*src)
-            break;
-        args.add(dst);
-        for (bool quoted = false; *src && (quoted || !isspace(*src)); src++)
-        {
-            if (*src != '"')
-                *dst++ = *src;
-            else if (dst > buf && src[-1] == '\\')
-                dst[-1] = '"';
-            else
-                quoted = !quoted;
-        }
-        *dst++ = '\0';
-    }
-    args.add(NULL);
-    return buf;
-}
-
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw)
-{
-    vector<char *> args;
-    char *buf = parsecommandline(GetCommandLine(), args);
-    SDL_SetModuleHandle(hInst);
-    int status = SDL_main(args.length() - 1, args.getbuf());
-    delete[] buf;
-    exit(status);
-    return 0;
-}
-#endif
+#include "engine/renderer/api/gl/VertexBuffer.h"
+#include "engine/renderer/api/gl/VertexArray.h"
+#include "engine/renderer/api/gl/IndexBuffer.h"
+#include "engine/renderer/api/gl/Shader.h"
+#include "engine/renderer/render2D/Renderer2D.h"
 
 VARP(compatibilitymode, 0, 1, 1); // FIXME : find a better place to put this ?
 
@@ -71,11 +34,6 @@ int main(int argc, char **argv)
     bool dedicated = false;
     bool quitdirectly = false;
     char *initscript = NULL;
-    // char *initdemo = NULL;
-    bool direct_connect = false; // to connect via assaultcube:// browser switch
-    string servername, password;
-    int serverport;
-
     const char *initmap = rndmapname();
 
     pushscontext(IEXC_CFG);
@@ -119,9 +77,6 @@ int main(int argc, char **argv)
                 default: printf("\f3unknown commandline option: -%c\n", argv[i][1]);
                 }
             }
-            else if (!strncmp(argv[i], "assaultcube://", 14)) { // browser direct connection
-                connectprotocol(argv[i], servername, serverport, password, direct_connect);
-            }
             else {
                 printf("\f3unknown commandline argument: %c\n", argv[i][0]);
             }
@@ -155,7 +110,7 @@ int main(int argc, char **argv)
     // setupscreen(usedcolorbits, useddepthbits, usedfsaa);
 
     windowInfo_s winfo;
-    winfo.bFullScreen = fullscreen;
+    winfo.bFullScreen = false;
     winfo.iWidth = scr_w;
     winfo.iHeight = scr_h;
     winfo.iColourBits = colorbits;
@@ -165,50 +120,34 @@ int main(int argc, char **argv)
     winfo.iStencilBits = stencilbits;
     winfo.iVSync = vsync;
     winfo.title = "Cube: Assault Cube";
-    if (g_client.window.create(winfo) == false)
-    {
+    if (g_client.window.create(winfo) == false) {
         printf("failed to create sdl window!\n");
         return -1;
     }
-    g_client.window.registerInputHandler(&g_client.input);
 
-    screen = g_client.window.getInfo().pWindow;
+    g_client.window.getWinEventHandler().registerRecver(&g_client.input);
 
-    // new renderer testing
-    VertexArray vao0;
-    vao0.create();
+    screen = g_client.window.getSDLSurface();
 
-    unsigned int bufferSizeTest_idx = (4 * 50000);
-    unsigned int bufferSizeTest = (6 * 50000);
+    // // new renderer testing
+    const windowInfo_s& winfoRef = g_client.window.getWinInfo();
+    Viewport vp;
+    vp.x = 0;
+    vp.y = 0;
+    vp.width = winfoRef.iWidth;
+    vp.height = winfoRef.iHeight;
 
-    VertexBuffer vbo0;
-    vbo0.create(bufferSizeTest_idx, VertexBufferLayoutType_t::DEF_2D);
+    Camera2D camera2d;
+    camera2d.setViewport(vp);
+    // camera2d.setPosition(Vector3(0.0f, 0.0f, 0.0f));
+    // camera2d.setRotation(Vector3(0.0f, 0.0f, 0.0f));
 
-    IndexBuffer ibo0;
-    ibo0.create(bufferSizeTest); // 100K X 6
-    
-    Shader shader0;
-    if (!shader0.load("bin_unix/data/shaders/gl_default2d.vert", "bin_unix/data/shaders/gl_default2d.frag")) {
-        printf("shader failed to load!!\n");
-    }
+    Renderer2D render2d;
+    render2d.initialize(camera2d);
 
-    // shader0.bind();
-    vao0.unbind();
-    vbo0.unbind();
-    ibo0.unbind();
-    shader0.unbind();
-    
-    shader0.destroy();
-    vao0.destroy();
-    vbo0.destroy();
-    ibo0.destroy();
-
-    // no more TTF ATM.
-    // initlog("font");
-    // initfont();
+    g_MaterialMgr.createDefault();
 
     initlog("video: misc");
-    // SDL_WM_SetCaption("AssaultCube", NULL);
     g_client.input.keyRepeat(false);
     SDL_ShowCursor(0);
 
@@ -307,10 +246,6 @@ int main(int argc, char **argv)
     initlog("models");
     preload_playermodels();
     preload_hudguns();
-
-    initlog("curl");
-    setupcurl();
-
     preload_entmodels();
 
     initlog("docs");
@@ -329,17 +264,21 @@ int main(int argc, char **argv)
         execute(initscript);
     }
 
-    // gamestarts = max(1, gamestarts + 1);
-    // if (autodownload && (gamestarts % 100 == 1)) {
-    //     sortpckservers();
-    // }
-
     initlog("mainloop");
 
     inputgrab(grabinput = true);
 
     inmainloop = true;
     g_TextureMgr.m_mloutput = true;
+    Sprite testSprite1;
+    Material* pSpriteMaterial1 = g_MaterialMgr.getMaterial("white");
+    Material mat0 = *pSpriteMaterial1;
+    testSprite1.create(10.0f, 10.0f, 100.0f, 100.0f, Vector4(0.0f, 1.0f, 1.0f, 1.0f), pSpriteMaterial1);
+    // testSprite1.create(10.0f, 10.0f, 100.0f, 100.0f, Vector4(1.0f, 1.0f, 0.0f, 1.0f));
+
+    Sprite testSprite2;
+    testSprite2.create(110.0f, 10.0f, 100.0f, 100.0f, Vector4(1.0f, 1.0f, 0.0f, 1.0f), pSpriteMaterial1);
+
     while (g_client.window.shouldClose()) {
         g_client.window.update();
 
@@ -388,17 +327,31 @@ int main(int argc, char **argv)
         audiomgr.updateaudio();
 
         computeraytable(camera1->o.x, camera1->o.y, dynfov());
-        if (frames > 3 && !minimized) {
-            gl_drawframe(screen->w, screen->h, fps < lowfps ? fps / lowfps : (fps > highfps ? fps / highfps : 1.0f), fps);
-            // if (frames > 4)
-            //     SDL_GL_SwapBuffers();
-            // hudonlyf("test!!!!!");
-        }
 
-        g_client.window.clear();
+        if (!minimized) {
+            gl_drawframe(screen->w, screen->h, fps < lowfps ? fps / lowfps : (fps > highfps ? fps / highfps : 1.0f), fps);
+        }
+        // if (frames > 3 && !minimized) {
+        //     // if (frames > 4)
+        //     //     SDL_GL_SwapBuffers();
+        //     // hudonlyf("test!!!!!");
+        // }
+
+        render2d.begin();
+        render2d.submitSprite(testSprite1, Transform());
+        render2d.submitSprite(testSprite2, Transform());
+        render2d.end();
+        render2d.flush();
+        
+        g_client.window.swapBuffers();
     }
+    
+    // render2d.shutdown();
+    g_TextureMgr.shutdown();
+    g_MaterialMgr.shutdown();
 
     quit();
+    // g_client.window.destroy();
     return EXIT_SUCCESS;
 }
 

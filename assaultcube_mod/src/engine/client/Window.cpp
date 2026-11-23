@@ -1,35 +1,13 @@
-#include "window.h"
-#include "input.h"
+#include "pch.h"
+#include "Window.h"
+#include "Input.h"
 #include "renderer/render_text.h"
-
-// /*
-// * ==========
-// * main window event system type
-// * ==========
-// */
-// void iEventRecv::setWindowInfoPointer(windowInfo_s* pWinInfo)
-// {
-//     if (pWindowInfo) {
-//         printf("evnt recver already has valid window context!\n");
-//     }
-//     if (!pWinInfo) {
-//         printf("invalid window info!\n");
-//         return;
-//     }
-
-//     pWindowInfo = pWindowInfo;
-// }
 
 /*
 * ==========
 * main window event system type
 * ==========
 */
-CWindowEventHandler::CWindowEventHandler()
-{
-    // m_eventRecv.reserve(1);
-}
-
 CWindowEventHandler::~CWindowEventHandler()
 {
 
@@ -41,20 +19,13 @@ bool CWindowEventHandler::registerRecver(iEventRecv* erecv)
     return true;
 }
 
-void CWindowEventHandler::sendEvent(SDL_Event& event, windowInfo_s* pwindowInfo)
+void CWindowEventHandler::sendEvent(SDL_Event& event, CWindow* pWindow)
 {
     for (size_t i = 0; i < m_eventRecv.size(); i++) {
-        if (m_eventRecv[i]) {
-            m_eventRecv[i]->handleEvent(event, pwindowInfo);
+        if (m_eventRecv[i] == nullptr) {
+            continue;
         }
-    }
-}
-
-void CWindowEventHandler::gatherFrameEventsLocal()
-{
-    SDL_Event evnt;
-    while(SDL_PollEvent(&evnt)) {
-        sendEvent(evnt, nullptr);
+        m_eventRecv[i]->handleEvent(event, pWindow);
     }
 }
 
@@ -73,13 +44,13 @@ bool CWindow::createWindow(windowInfo_s& winfo)
         winfo.iSDLFlags |= SDL_FULLSCREEN;
     }
 
-    winfo.pWindow = SDL_SetVideoMode(
+    m_pWindow = SDL_SetVideoMode(
         winfo.iWidth, 
         winfo.iHeight, 
         winfo.iColourBits, 
         SDL_OPENGL | winfo.iSDLFlags
     );
-    if (winfo.pWindow) {
+    if (m_pWindow) {
         if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
             printf("failed to initialize glad!\n");
             return false;
@@ -101,15 +72,15 @@ bool CWindow::createWindow(windowInfo_s& winfo)
 }
 
 CWindow::CWindow()
+    : m_pWindow(nullptr)
 {
     m_info = windowInfo_s();
-    // m_pEventHandler = nullptr;
-    this->pInput = nullptr;
     m_shouldExit = false;
 }
 
 CWindow::~CWindow()
 {
+    destroy();
 }
 
 bool CWindow::create(windowInfo_s& winfo)
@@ -130,41 +101,15 @@ bool CWindow::reload()
 {
     // this needs some work....
     return true;
-
-    if (m_info.pWindow) {
-        destroy();
-    }
-    
-    // m_info = winfo;
-    if (createWindow(m_info)) {
-        return true;
-    }
-    return false;
 }
 
 void CWindow::destroy()
 {
-    if (m_info.pWindow == NULL) {
+    if (m_pWindow == nullptr) {
         return;
     }
     SDL_ShowCursor(1);
     SDL_Quit();
-}
-
-void CWindow::setEventHandler(CWindowEventHandler* pEvntHdlr)
-{
-    // if (!m_pEventHandler) {
-    //     return;
-    // } 
-    // m_pEventHandler = pEvntHdlr;
-}
-
-void CWindow::registerInputHandler(CInput* pinpt)
-{
-    if (!pinpt) {
-        return;
-    }
-    pInput = pinpt;
 }
 
 bool CWindow::shouldClose()
@@ -181,36 +126,48 @@ void CWindow::update()
 
     SDL_Event evnt;
     while(SDL_PollEvent(&evnt)) {
-        if (evnt.type == SDL_EventType::SDL_QUIT) {
+        switch (evnt.type) {
+        case SDL_EventType::SDL_QUIT:{
             m_shouldExit = true;
+            
+            // we break here so the event handler can get the quit msg and shutdown subsystems that need it.
+            break;
         }
-        // if (m_pEventHandler != nullptr) {
-        //     m_pEventHandler->sendEvent(evnt, &m_info);
-        // }
-        if (pInput != nullptr) {
-            pInput->handleInputEvent(evnt, &m_info);
+        default: { break; }
         }
 
+        // send this evnt to the handler
+        m_eventHandler.sendEvent(evnt, this);
+
+        // NOW we break the loop to close the window and then exit main game/engine loop.
         if (m_shouldExit == true) {
             return;
         } 
     }
+
+    // glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void CWindow::clear()
+void CWindow::swapBuffers()
 {
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     SDL_GL_SwapBuffers();
 }
 
-windowInfo_s& CWindow::getInfo()
+const windowInfo_s& CWindow::getWinInfo() const
 {
     return m_info;
 }
 
-const windowInfo_s& CWindow::getInto() const
+SDL_Surface* CWindow::getSDLSurface()
 {
-    return m_info;
+    return m_pWindow;
+}
+
+CWindowEventHandler& CWindow::getWinEventHandler()
+{
+    return m_eventHandler;
 }

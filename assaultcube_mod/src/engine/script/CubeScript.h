@@ -1,5 +1,5 @@
 #ifndef CUBESCRIPT_H
-#define CUBECSRIPT_H
+#define CUBESCRIPT_H
 
 /*
 * ==========

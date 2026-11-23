@@ -156,16 +156,16 @@ model *loadmodel(const char *name, int i, bool trydl)
             {
                 delete m;
                 loadingmodel = NULL;
-                if(trydl)
-                {
-                    defformatstring(dl)("packages/models/%s", name);
-                    requirepackage(PCK_MAPMODEL, dl);
-                }
-                else
-                {
-                    mdllookup.access(newstring(name), nomodel);
-                    conoutf("\f3failed to load model %s", name);
-                }
+                // if(trydl)
+                // {
+                //     defformatstring(dl)("packages/models/%s", name);
+                //     requirepackage(PCK_MAPMODEL, dl);
+                // }
+                // else
+                // {
+                mdllookup.access(newstring(name), nomodel);
+                conoutf("\f3failed to load model %s", name);
+                // }
             }
         }
         popscontext();

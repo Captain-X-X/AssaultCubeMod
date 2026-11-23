@@ -1,18 +1,15 @@
 #include "pch.h"
 #include "glutil.h"
 
-bool GL_GetCompileErrors(unsigned int shader, GL_CompileErrorTypes_t type)
+bool GL_GetCompileErrors(unsigned int shader, const char* type)
 {
     GLint hasCompiled;
     char infoLog[1024];
-    if (type != GL_CompileErrorTypes_t::SHA_PROGRAM) {
+    if (type != "PROGRAM") {
         glGetShaderiv(shader, GL_COMPILE_STATUS, &hasCompiled);
         if (hasCompiled == GL_FALSE) {
             glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-            printf("shader compile error for: %s. info_log:\n %s", 
-                (type == GL_CompileErrorTypes_t::SHA_FRAGMENT) ? "frag" : "vert", 
-                infoLog
-            );
+            printf("shader compile error for: %s. info_log:\n %s", type, infoLog);
             return false;
         }
     }
@@ -20,7 +17,7 @@ bool GL_GetCompileErrors(unsigned int shader, GL_CompileErrorTypes_t type)
         glGetProgramiv(shader, GL_LINK_STATUS, &hasCompiled);
         if (hasCompiled == GL_FALSE) {
             glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-            printf("shader program error: \n %s", type, infoLog);
+            printf("shader compile error for: %s. info_log:\n %s", type, infoLog);
             return false;
         }
     }
@@ -36,7 +33,7 @@ unsigned int GL_CompileShader(const char* vertSrc, const char* fragSrc)
         unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragmentShader, 1, &fragSrc, NULL);
         glCompileShader(fragmentShader);
-        if(!GL_GetCompileErrors(fragmentShader, GL_CompileErrorTypes_t::SHA_FRAGMENT)) {
+        if(!GL_GetCompileErrors(fragmentShader, "fragment_shader")) {
             return NULL;
         }
         glAttachShader(shaderId, fragmentShader);
@@ -50,7 +47,7 @@ unsigned int GL_CompileShader(const char* vertSrc, const char* fragSrc)
         unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, 1, &vertSrc, NULL);
         glCompileShader(vertexShader);
-        if(!GL_GetCompileErrors(vertexShader, GL_CompileErrorTypes_t::SHA_VERTEX)) {
+        if(!GL_GetCompileErrors(vertexShader, "vertex_shader")) {
             return NULL;
         }
         glAttachShader(shaderId, vertexShader);
@@ -90,6 +87,18 @@ unsigned int GL_CreateTexture2D(unsigned char* pixles, int w, int h, unsigned in
     return id;
 }
 
+unsigned int GL_GetTextureFormat(unsigned int bytesPerPixel)
+{
+    switch(bytesPerPixel) {
+    case 8: return GL_LUMINANCE;
+    case 16: return GL_LUMINANCE_ALPHA;
+    case 24: return GL_RGB;
+    case 32: return GL_RGBA;
+    default: break;
+    }
+    return GL_RGBA;
+}
+
 unsigned int GL_GetTextureFormatSize(unsigned int format)
 {
     switch(format) {
@@ -100,4 +109,20 @@ unsigned int GL_GetTextureFormatSize(unsigned int format)
     case GL_RGBA: return 4;
     default: return 4;
     }
+}
+
+unsigned int GL_LoadCreateTexture2D(const char *texname, int &xs, int &ys, int &bpp, int clamp = 0, bool mipmap = true, bool canreduce = false, float scale = 1.0f)
+{
+    unsigned char* data = stbi_load(texname, &xs, &ys, &bpp, 0);
+    if (!data) {
+        // printf("Failed to load texture: %s\n", texname);
+        return 0;
+    }
+    bpp = bpp * 8;
+    unsigned int format = GL_GetTextureFormat(bpp);
+    unsigned int id;
+    glGenTextures(1, &id);
+    createtexture(id, xs, ys, (void*)data, clamp, mipmap, canreduce, format);
+    stbi_image_free(data);
+    return id;
 }

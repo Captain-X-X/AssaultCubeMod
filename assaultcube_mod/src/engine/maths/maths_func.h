@@ -1,5 +1,5 @@
-#ifndef ASPENMATHSFUNC_H
-#define ASPENMATHSFUNC_H
+#ifndef MATHSFUNC_H
+#define MATHSFUNC_H
 
 namespace Maths
 {

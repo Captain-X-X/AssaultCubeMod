@@ -531,26 +531,26 @@ bool load_world(char *mname)        // still supports all map formats that have 
     c2skeepalive();
 
     watch.start();
-    loopi(256) if(texuse[i]) lookupworldtexture(i, autodownload ? true : false);
+    loopi(256) if(texuse[i]) lookupworldtexture(i, false);
     int texloadtime = watch.stop();
 
     c2skeepalive();
 
     watch.start();
-    preload_mapmodels(autodownload ? true : false);
+    preload_mapmodels(false);
     int mdlloadtime = watch.stop();
 
     c2skeepalive();
 
     watch.start();
-    audiomgr.preloadmapsounds(autodownload ? true : false);
+    audiomgr.preloadmapsounds(false);
     int audioloadtime = watch.stop();
 
     c2skeepalive();
 
     watch.start();
-    int downloaded = downloadpackages();
-    if(downloaded > 0) printf("downloaded content (%d KB in %d seconds)\n", downloaded/1000, watch.stop()/1000);
+    // int downloaded = downloadpackages();
+    // if(downloaded > 0) printf("downloaded content (%d KB in %d seconds)\n", downloaded/1000, watch.stop()/1000);
 
     c2skeepalive();
 

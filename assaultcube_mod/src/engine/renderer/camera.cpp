@@ -2,9 +2,9 @@
 #include "camera.h"
 
 Camera::Camera()
-    : viewAngles(Vector3(0.0f, 0.0f, 0.0f))
+    : m_viewAngles(Vector3(0.0f, 0.0f, 0.0f))
 {
-    viewMatrix.identity();
+    m_viewMatrix.identity();
 }
 
 Camera::~Camera()
@@ -13,35 +13,35 @@ Camera::~Camera()
 
 void Camera::create(const Vector3& default_angles)
 {
-    viewAngles = default_angles;
+    m_viewAngles = default_angles;
 }
 
 void Camera::setViewAngles(const Vector3& newAngles)
 {
-    viewAngles = newAngles;
+    m_viewAngles = newAngles;
 }
 
 void Camera::followPosition(const Vector3& pos)
 {
-    origin = pos;
+    m_origin = pos;
 }
 
-Matrix4x4& Camera::getViewMatrixRaw()
+Matrix4& Camera::getViewMatrixRaw()
 {
-    viewMatrix.rotate_around_z(viewAngles.z);
-    viewMatrix.rotate_around_x(viewAngles.x);
-    viewMatrix.rotate_around_y(viewAngles.y);
+    m_viewMatrix.rotate_around_z(m_viewAngles.z);
+    m_viewMatrix.rotate_around_x(m_viewAngles.x);
+    m_viewMatrix.rotate_around_y(m_viewAngles.y);
 
     // RH -> Quake Z-up/LH conversion
-    viewMatrix.rotate_around_x(ToRadians(-90.0f));
-    viewMatrix.scale(1.0f, -1.0f, 1.0f);
+    m_viewMatrix.rotate_around_x(ToRadians(-90.0f));
+    m_viewMatrix.scale(1.0f, -1.0f, 1.0f);
 
-    viewMatrix.translate(Vector3(
-            -origin.x,
-            -origin.y,
-            -origin.z
+    m_viewMatrix.translate(Vector3(
+            -m_origin.x,
+            -m_origin.y,
+            -m_origin.z
         )
     );
 
-    return viewMatrix;
+    return m_viewMatrix;
 }

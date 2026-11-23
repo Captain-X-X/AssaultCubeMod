@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "cube.h"
-#include "cubescript.h"
+#include "CubeScript.h"
 
 /*
 * ==========

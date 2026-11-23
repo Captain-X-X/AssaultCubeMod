@@ -1018,7 +1018,7 @@ void entinmap(physent *d)    // brute force but effective way to find a free spa
 //         m.y = move*cosf(RAD*yaw);
 //     }
 //     else m.x = m.y = 0;
-
+//
 //     if(pitch)
 //     {
 //         m.x *= cosf(RAD*pitch);
@@ -1026,14 +1026,14 @@ void entinmap(physent *d)    // brute force but effective way to find a free spa
 //         m.z = move*sinf(RAD*pitch);
 //     }
 //     else m.z = 0;
-
+//
 //     if(strafe)
 //     {
 //         m.x += strafe*cosf(RAD*yaw);
 //         m.y += strafe*sinf(RAD*yaw);
 //     }
 // }
-
+//
 // void vectoyawpitch(const vec &v, float &yaw, float &pitch)
 // {
 //     yaw = -atan2(v.x, v.y)/RAD;

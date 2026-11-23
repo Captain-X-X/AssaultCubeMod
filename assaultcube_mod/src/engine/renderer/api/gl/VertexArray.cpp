@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "vertexarray.h"
+#include "VertexArray.h"
 
 VertexArray::VertexArray()
     : m_id(NULL)
@@ -23,6 +23,7 @@ void VertexArray::create()
 
     // printf("vertex array created: %d\n", m_id);
 }
+
 void VertexArray::destroy()
 {
     if(m_id != NULL) {

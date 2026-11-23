@@ -1,12 +1,12 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 #include "cube.h"
-#include "window.h"
-#include "input.h"
+#include "Window.h"
+#include "Input.h"
 
 struct clientStatic {
     CWindow window;
-    CWindowEventHandler eventHandler;
+    // CWindowEventHandler eventHandler;
     CInput input;
 };
 extern clientStatic g_client;

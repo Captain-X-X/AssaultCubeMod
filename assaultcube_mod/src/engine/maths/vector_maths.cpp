@@ -6,34 +6,40 @@
 /*
     MMaths: vec2_t
 */
-vec2_t::vec2_t(float _v)
-    : x(_v), y(_v) {}
+Vector2::Vector2(float _x, float _y)
+    : x(_x), y(_y) 
+{
 
-vec2_t::vec2_t(float _x, float _y)
-    : x(_x), y(_y) {}
+}
 
-vec2_t vec2_t::operator*(float _v)
+Vector2::Vector2(float _v)
+    : x(_v), y(_v) 
+{
+
+}
+
+vec2_t Vector2::operator*(float _v)
 {
     x *= _v;
     y *= _v;
     return *this;
 }
 
-vec2_t vec2_t::operator/(float _v)
+vec2_t Vector2::operator/(float _v)
 {
     x /= _v;
     y /= _v;
     return *this;
 }
 
-vec2_t vec2_t::operator*(const vec2_t &_v)
+vec2_t Vector2::operator*(const vec2_t &_v)
 {
     x *= _v.x;
     y *= _v.y;
     return *this;
 }
 
-vec2_t vec2_t::operator/(const vec2_t &_v)
+vec2_t Vector2::operator/(const vec2_t &_v)
 {
     x /= _v.x;
     y /= _v.y;
@@ -43,77 +49,76 @@ vec2_t vec2_t::operator/(const vec2_t &_v)
 /*
     MMaths: vec3_t
 */
-vec3_t::vec3_t()
-{
-    x = 0.0f;
-    y = 0.0f;
-    z = 0.0f;
-}
-vec3_t::vec3_t(float a, float b, float c)
+Vector3::Vector3(float a, float b, float c)
     : x(a), y(b), z(c)
 {
+
 }
 
-vec3_t::vec3_t(float *v)
+Vector3::Vector3(float *v)
     : x(v[0]), y(v[1]), z(v[2])
 {
 }
 
-vec3_t::vec3_t(const vec2_t &_v2, float _z)
+Vector3::Vector3(const Vector2 &_v2, float _z)
 {
     this->x = _v2.x;
     this->y = _v2.y;
     this->z = _z;
 }
 
-float &vec3_t::operator[](int i)
+float &Vector3::operator[](int i)
 {
     return v[i];
 }
 
-float vec3_t::operator[](int i) const
+float Vector3::operator[](int i) const
 {
     return v[i];
 }
 
-bool vec3_t::iszero() const
+bool Vector3::iszero() const
 {
     return (
         x == 0.0f &&
         y == 0.0f &&
-        z == 0.0f);
+        z == 0.0f
+);
 }
 
-bool vec3_t::operator==(const vec3_t &o) const
+bool Vector3::operator==(const vec3_t &o) const
 {
     return (
         x == o.x &&
         y == o.y &&
-        z == o.z);
+        z == o.z
+    );
 }
 
-bool vec3_t::operator!=(const vec3_t &o) const
+bool Vector3::operator!=(const vec3_t &o) const
 {
     return (
         x != o.x ||
         y != o.y ||
-        z != o.z);
+        z != o.z
+    );
 }
 
-vec3_t vec3_t::operator-(const vec3_t &_v) const
+vec3_t Vector3::operator-(const vec3_t &_v) const
 {
     return vec3_t(
         this->x - _v.x,
         this->y - _v.y,
-        this->z - _v.z);
+        this->z - _v.z
+    );
 }
 
-vec3_t vec3_t::operator-() const
+vec3_t Vector3::operator-() const
 {
     return vec3_t(-x, -y, -z);
 }
 
-vec3_t &vec3_t::mul(float f)
+vec3_t &Vector3::mul(float f)
 {
     x *= f;
     y *= f;
@@ -121,7 +126,7 @@ vec3_t &vec3_t::mul(float f)
     return *this;
 }
 
-vec3_t &vec3_t::div(float f)
+vec3_t &Vector3::div(float f)
 {
     x /= f;
     y /= f;
@@ -129,7 +134,7 @@ vec3_t &vec3_t::div(float f)
     return *this;
 }
 
-vec3_t &vec3_t::add(float f)
+vec3_t &Vector3::add(float f)
 {
     x += f;
     y += f;
@@ -137,7 +142,7 @@ vec3_t &vec3_t::add(float f)
     return *this;
 }
 
-vec3_t &vec3_t::sub(float f)
+vec3_t &Vector3::sub(float f)
 {
     x -= f;
     y -= f;
@@ -145,7 +150,7 @@ vec3_t &vec3_t::sub(float f)
     return *this;
 }
 
-vec3_t &vec3_t::add(const vec3_t &o)
+vec3_t &Vector3::add(const vec3_t &o)
 {
     x += o.x;
     y += o.y;
@@ -153,7 +158,7 @@ vec3_t &vec3_t::add(const vec3_t &o)
     return *this;
 }
 
-vec3_t &vec3_t::sub(const vec3_t &o)
+vec3_t &Vector3::sub(const vec3_t &o)
 {
     x -= o.x;
     y -= o.y;
@@ -161,98 +166,101 @@ vec3_t &vec3_t::sub(const vec3_t &o)
     return *this;
 }
 
-float vec3_t::squaredlen() const
+float Vector3::squaredlen() const
 {
     return (
         x * x +
         y * y +
-        z * z);
+        z * z
+    );
 }
 
-float vec3_t::sqrxy() const
+float Vector3::sqrxy() const
 {
     return (x * x + y * y);
 }
 
-float vec3_t::dot(const vec3_t &o) const
+float Vector3::dot(const vec3_t &o) const
 {
     return (
         x * o.x +
         y * o.y +
-        z * o.z);
+        z * o.z
+    );
 }
 
-float vec3_t::dotxy(const vec3_t &o) const
+float Vector3::dotxy(const vec3_t &o) const
 {
     return (x * o.x + y * o.y);
 }
 
-float vec3_t::magnitude() const
+float Vector3::magnitude() const
 {
     return sqrtf(squaredlen());
 }
 
-vec3_t &vec3_t::normalize()
+vec3_t &Vector3::normalize()
 {
     div(magnitude());
     return *this;
 }
 
 // should NOT be used
-float vec3_t::fmag() const
+float Vector3::fmag() const
 {
     return Maths::fSqrt(squaredlen());
 }
 
-float vec3_t::ufmag() const
+float Vector3::ufmag() const
 {
     return Maths::ufSqrt(squaredlen());
 }
 
-float vec3_t::fmagxy() const
+float Vector3::fmagxy() const
 {
     return Maths::fSqrt(x * x + y * y);
 }
 
-float vec3_t::ufmagxy() const
+float Vector3::ufmagxy() const
 {
     return Maths::ufSqrt(x * x + y * y);
 }
 
-float vec3_t::dist(const vec3_t &e) const
+float Vector3::dist(const vec3_t &e) const
 {
     vec3_t t;
     return dist(e, t);
 }
 
-float vec3_t::dist(const vec3_t &e, vec3_t &t) const
+float Vector3::dist(const vec3_t &e, vec3_t &t) const
 {
     t = *this;
     t.sub(e);
     return t.magnitude();
 }
 
-float vec3_t::distxy(const vec3_t &e) const
+float Vector3::distxy(const vec3_t &e) const
 {
     float dx = e.x - x, dy = e.y - y;
     return sqrtf(dx * dx + dy * dy);
 }
 
-float vec3_t::magnitudexy() const
+float Vector3::magnitudexy() const
 {
     return sqrtf(x * x + y * y);
 }
 
-bool vec3_t::reject(const vec3_t &o, float max) const
+bool Vector3::reject(const vec3_t &o, float max) const
 {
     return (
         x > o.x + max ||
         x < o.x - max ||
         y > o.y + max ||
-        y < o.y - max);
+        y < o.y - max
+    );
 }
 
-vec3_t vec3_t::cross(const vec3_t &a, const vec3_t &b)
+vec3_t Vector3::cross(const vec3_t &a, const vec3_t &b)
 {
     vec3_t retVec = vec3_t(0.0f, 0.0f, 0.0f);
     // retVec.x = (a.y * b.z - a.z * b.y);
@@ -262,33 +270,33 @@ vec3_t vec3_t::cross(const vec3_t &a, const vec3_t &b)
     return retVec;
 }
 
-float vec3_t::cxy(const vec3_t &a)
+float Vector3::cxy(const vec3_t &a)
 {
     return x * a.y - y * a.x;
 }
 
-void vec3_t::rotate_around_z(float angle)
+void Vector3::rotate_around_z(float angle)
 {
     *this = vec3_t(cosf(angle) * x - sinf(angle) * y, cosf(angle) * y + sinf(angle) * x, z);
 }
 
-void vec3_t::rotate_around_x(float angle)
+void Vector3::rotate_around_x(float angle)
 {
     *this = vec3_t(x, cosf(angle) * y - sinf(angle) * z, cosf(angle) * z + sinf(angle) * y);
 }
 
-void vec3_t::rotate_around_y(float angle)
+void Vector3::rotate_around_y(float angle)
 {
     *this = vec3_t(cosf(angle) * x - sinf(angle) * z, y, cosf(angle) * z + sinf(angle) * x);
 }
 
-vec3_t &vec3_t::rotate(float angle, const vec3_t &d)
+vec3_t &Vector3::rotate(float angle, const vec3_t &d)
 {
     float c = cosf(angle), s = sinf(angle);
     return rotate(c, s, d);
 }
 
-vec3_t &vec3_t::rotate(float c, float s, const vec3_t &d)
+vec3_t &Vector3::rotate(float c, float s, const vec3_t &d)
 {
     *this = vec3_t(x * (d.x * d.x * (1 - c) + c) + y * (d.x * d.y * (1 - c) - d.z * s) + z * (d.x * d.z * (1 - c) + d.y * s),
                    x * (d.y * d.x * (1 - c) + d.z * s) + y * (d.y * d.y * (1 - c) + c) + z * (d.y * d.z * (1 - c) - d.x * s),
@@ -296,7 +304,7 @@ vec3_t &vec3_t::rotate(float c, float s, const vec3_t &d)
     return *this;
 }
 
-void vec3_t::orthogonal(const vec3_t &d)
+void Vector3::orthogonal(const vec3_t &d)
 {
     int i = fabs(d.x) > fabs(d.y) ? (fabs(d.x) > fabs(d.z) ? 0 : 2) : (fabs(d.y) > fabs(d.z) ? 1 : 2);
     v[i] = d[(i + 1) % 3];
@@ -339,18 +347,35 @@ void vectoyawpitch(const vec3_t& v, float &yaw, float &pitch)
 }
 
 /*
-    MMaths: vec4_t
+* ==========
+* Vector FLOAT 4
+* ==========
 */
-vec4_t::vec4_t(float _v)
-    : vec4_t(_v, _v, _v, _v) {}
+Vector4::Vector4(float _x, float _y, float _z, float _w)
+    : x(_x), y(_y), z(_z), w(_w) 
+{
 
-vec4_t::vec4_t(float _x, float _y, float _z, float _w)
-    : x(_x), y(_y), z(_z), w(_w) {}
+}
+ 
+// Vector4::Vector4(float _v)
+//     : x(_v), y(_v), z(_v), w(_v) 
+// {
 
-vec4_t::vec4_t(const vec3_t &_v, float _a)
-    : vec4_t(_v.x, _v.y, _v.z, _a) {}
+// }
 
-vec4_t vec4_t::operator*(float _v)
+Vector4::Vector4(float* _v) 
+    : x(_v[0]), y(_v[1]), z(_v[2]), w(_v[3]) 
+{ 
+    
+}
+
+Vector4::Vector4(const vec3_t &_v, float _a)
+    : x(_v.x), y(_v.y), z(_v.z), w(_a) 
+{
+    
+}
+
+vec4_t Vector4::operator*(float _v)
 {
     x *= _v;
     y *= _v;
@@ -358,7 +383,8 @@ vec4_t vec4_t::operator*(float _v)
     w *= _v;
     return *this;
 }
-vec4_t vec4_t::operator/(float _v)
+
+vec4_t Vector4::operator/(float _v)
 {
     x /= _v;
     y /= _v;
@@ -366,7 +392,8 @@ vec4_t vec4_t::operator/(float _v)
     w /= _v;
     return *this;
 }
-vec4_t vec4_t::operator*(const vec4_t &_v)
+
+vec4_t Vector4::operator*(const vec4_t &_v)
 {
     x *= _v.x;
     y *= _v.y;
@@ -375,7 +402,7 @@ vec4_t vec4_t::operator*(const vec4_t &_v)
     return *this;
 }
 
-vec4_t vec4_t::operator/(const vec4_t &_v)
+vec4_t Vector4::operator/(const vec4_t &_v)
 {
     x /= _v.x;
     y /= _v.y;
@@ -389,46 +416,49 @@ vec4_t vec4_t::operator/(const vec4_t &_v)
  * vector of INT X,Y,Z
  * ==========
  */
-ivec3_t::ivec3_t()
+ivec3::ivec3(int _x, int _y, int _z)
+    : x(_x), y(_y), z(_z)
 {
-}
 
-ivec3_t::ivec3_t(const vec3_t &v)
+}
+ 
+ivec3::ivec3(const vec3_t &v)
     : x(int(v.x)), y(int(v.y)), z(int(v.z))
 {
+
 }
 
-ivec3_t::ivec3_t(int a, int b, int c)
-    : x(a), y(b), z(c)
+ivec3::~ivec3()
 {
+
 }
 
-vec3_t ivec3_t::tovec() const
+vec3_t ivec3::tovec() const
 {
-    return vec3_t(x, y, z);
+    return vec3_t((float)x, (float)y, (float)z);
 }
 
-int &ivec3_t::operator[](int i)
-{
-    return v[i];
-}
-
-int ivec3_t::operator[](int i) const
+int &ivec3::operator[](int i)
 {
     return v[i];
 }
 
-bool ivec3_t::operator==(const ivec3_t &v) const
+int ivec3::operator[](int i) const
+{
+    return v[i];
+}
+
+bool ivec3::operator==(const ivec3_t &v) const
 {
     return x == v.x && y == v.y && z == v.z;
 }
 
-bool ivec3_t::operator!=(const ivec3_t &v) const
+bool ivec3::operator!=(const ivec3_t &v) const
 {
     return x != v.x || y != v.y || z != v.z;
 }
 
-ivec3_t &ivec3_t::mul(int n)
+ivec3_t &ivec3::mul(int n)
 {
     x *= n;
     y *= n;
@@ -436,7 +466,7 @@ ivec3_t &ivec3_t::mul(int n)
     return *this;
 }
 
-ivec3_t &ivec3_t::div(int n)
+ivec3_t &ivec3::div(int n)
 {
     x /= n;
     y /= n;
@@ -444,7 +474,7 @@ ivec3_t &ivec3_t::div(int n)
     return *this;
 }
 
-ivec3_t &ivec3_t::add(int n)
+ivec3_t &ivec3::add(int n)
 {
     x += n;
     y += n;
@@ -452,7 +482,7 @@ ivec3_t &ivec3_t::add(int n)
     return *this;
 }
 
-ivec3_t &ivec3_t::sub(int n)
+ivec3_t &ivec3::sub(int n)
 {
     x -= n;
     y -= n;
@@ -460,7 +490,7 @@ ivec3_t &ivec3_t::sub(int n)
     return *this;
 }
 
-ivec3_t &ivec3_t::add(const ivec3_t &v)
+ivec3_t &ivec3::add(const ivec3_t &v)
 {
     x += v.x;
     y += v.y;
@@ -468,7 +498,7 @@ ivec3_t &ivec3_t::add(const ivec3_t &v)
     return *this;
 }
 
-ivec3_t &ivec3_t::sub(const ivec3_t &v)
+ivec3_t &ivec3::sub(const ivec3_t &v)
 {
     x -= v.x;
     y -= v.y;
@@ -476,7 +506,7 @@ ivec3_t &ivec3_t::sub(const ivec3_t &v)
     return *this;
 }
 
-ivec3_t &ivec3_t::mask(int n)
+ivec3_t &ivec3::mask(int n)
 {
     x &= n;
     y &= n;
@@ -484,7 +514,7 @@ ivec3_t &ivec3_t::mask(int n)
     return *this;
 }
 
-ivec3_t &ivec3_t::cross(const ivec3_t &a, const ivec3_t &b)
+ivec3_t &ivec3::cross(const ivec3_t &a, const ivec3_t &b)
 {
     x = a.y * b.z - a.z * b.y;
     y = a.z * b.x - a.x * b.z;
@@ -492,7 +522,7 @@ ivec3_t &ivec3_t::cross(const ivec3_t &a, const ivec3_t &b)
     return *this;
 }
 
-int ivec3_t::dot(const ivec3_t &o) const
+int ivec3::dot(const ivec3_t &o) const
 {
     return x * o.x + y * o.y + z * o.z;
 }
@@ -512,46 +542,53 @@ uint hthash(const ivec3_t &k)
  * vector of BYTE X,Y,Z
  * ==========
  */
-bvec3_t::bvec3_t()
-{
-}
-
-bvec3_t::bvec3_t(uchar x, uchar y, uchar z)
+bvec3::bvec3(uchar x, uchar y, uchar z)
     : x(x), y(y), z(z)
 {
+
 }
 
-bvec3_t::bvec3_t(const vec3_t &v)
+bvec3::bvec3(const vec3_t &v)
     : x((uchar)((v.x + 1) * 255 / 2)), y((uchar)((v.y + 1) * 255 / 2)), z((uchar)((v.z + 1) * 255 / 2))
 {
+
 }
 
-uchar &bvec3_t::operator[](int i)
+bvec3::~bvec3()
+{
+
+}
+
+uchar &bvec3::operator[](int i)
 {
     return v[i];
 }
 
-uchar bvec3_t::operator[](int i) const
+uchar bvec3::operator[](int i) const
 {
     return v[i];
 }
 
-bool bvec3_t::operator==(const bvec3_t &v) const
+bool bvec3::operator==(const bvec3_t &v) const
 {
     return x == v.x && y == v.y && z == v.z;
 }
 
-bool bvec3_t::operator!=(const bvec3_t &v) const
+bool bvec3::operator!=(const bvec3_t &v) const
 {
     return x != v.x || y != v.y || z != v.z;
 }
 
-bool bvec3_t::iszero() const
+bool bvec3::iszero() const
 {
     return x == 0 && y == 0 && z == 0;
 }
 
-vec3_t bvec3_t::tovec() const
+vec3_t bvec3::tovec() const
 {
-    return vec3_t(x * (2.0f / 255.0f) - 1.0f, y * (2.0f / 255.0f) - 1.0f, z * (2.0f / 255.0f) - 1.0f);
+    return vec3_t(
+        x * (2.0f / 255.0f) - 1.0f, 
+        y * (2.0f / 255.0f) - 1.0f, 
+        z * (2.0f / 255.0f) - 1.0f
+    );
 }

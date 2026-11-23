@@ -221,12 +221,12 @@ extern void extinfo_teamscorebuf(ucharbuf &p);
 extern char *votestring(int type, char *arg1, char *arg2, char *arg3);
 extern int wizardmain(int argc, char **argv);
 
-extern int autodownload;
-extern void setupcurl();
-extern bool requirepackage(int type, const char *path);
-extern int downloadpackages();
-extern void sortpckservers();
-extern void writepcksourcecfg();
+// extern int autodownload;
+// extern void setupcurl();
+// extern bool requirepackage(int type, const char *path);
+// extern int downloadpackages();
+// extern void sortpckservers();
+// extern void writepcksourcecfg();
 
 // demo
 #define DHDR_DESCCHARS 80

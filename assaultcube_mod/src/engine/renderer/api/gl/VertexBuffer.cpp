@@ -1,4 +1,4 @@
-#include "vertexbuffer.h"
+#include "VertexBuffer.h"
 
 VertexBuffer::VertexBuffer()
     : m_id(NULL), m_size(NULL), m_pDataMap(nullptr)
@@ -29,15 +29,15 @@ void VertexBuffer::create(unsigned int size, VertexBufferLayoutType_t defaultLay
         setUniformLocation(0, 3, STRIDE(VertexData2D), GL_FLOAT, (const void*)0);
         setUniformLocation(1, 4, STRIDE(VertexData2D), GL_FLOAT, (const void*)(offsetof(VertexData2D, VertexData2D::colour)));
         setUniformLocation(2, 2, STRIDE(VertexData2D), GL_FLOAT, (const void*)(offsetof(VertexData2D, VertexData2D::uv)));
-        setUniformLocation(3, 1, STRIDE(VertexData2D), GL_UNSIGNED_INT, (const void*)(offsetof(VertexData2D, VertexData2D::texture)));
+        // setUniformLocation(3, 1, STRIDE(VertexData2D), GL_UNSIGNED_INT, (const void*)(offsetof(VertexData2D, VertexData2D::texture)));
         break;
     }
     case VertexBufferLayoutType_t::DEF_3D: {
-        setUniformLocation(0, 3, STRIDE(VertexData2D), GL_FLOAT, (const void*)0);
-        setUniformLocation(1, 3, STRIDE(VertexData2D), GL_FLOAT, (const void*)(offsetof(VertexData3D, VertexData3D::normal)));
-        setUniformLocation(2, 4, STRIDE(VertexData2D), GL_FLOAT, (const void*)(offsetof(VertexData3D, VertexData3D::colour)));
-        setUniformLocation(3, 2, STRIDE(VertexData2D), GL_FLOAT, (const void*)(offsetof(VertexData3D, VertexData3D::uv)));
-        setUniformLocation(4, 1, STRIDE(VertexData2D), GL_UNSIGNED_INT, (const void*)(offsetof(VertexData3D, VertexData3D::texture)));
+        setUniformLocation(0, 3, STRIDE(VertexData3D), GL_FLOAT, (const void*)0);
+        setUniformLocation(1, 3, STRIDE(VertexData3D), GL_FLOAT, (const void*)(offsetof(VertexData3D, VertexData3D::normal)));
+        setUniformLocation(2, 4, STRIDE(VertexData3D), GL_FLOAT, (const void*)(offsetof(VertexData3D, VertexData3D::colour)));
+        setUniformLocation(3, 2, STRIDE(VertexData3D), GL_FLOAT, (const void*)(offsetof(VertexData3D, VertexData3D::uv)));
+        // setUniformLocation(4, 1, STRIDE(VertexData2D), GL_UNSIGNED_INT, (const void*)(offsetof(VertexData3D, VertexData3D::texture)));
         break;
     }
     default:{ break; }
@@ -48,7 +48,7 @@ void VertexBuffer::create(unsigned int size, VertexBufferLayoutType_t defaultLay
 
 void VertexBuffer::setUniformLocation(unsigned int location, unsigned int size, unsigned int stride, unsigned int gltype, const void* pData)
 {
-    glVertexAttribPointer(location, size, gltype, false, stride, pData);
+    glVertexAttribPointer(location, size, gltype, GL_FALSE, stride, pData);
     glEnableVertexAttribArray(location);
 }
 
@@ -66,7 +66,7 @@ void VertexBuffer::submitData2D(std::vector<VertexData2D>& data)
         pData->position = data[i].position;
         pData->colour = data[i].colour;
         pData->uv = data[i].uv;
-        pData->texture = data[i].texture;
+        // pData->texture = data[i].texture;
         pData++;
     }
     unmapBuffer();
@@ -87,7 +87,7 @@ void VertexBuffer::submitData3D(std::vector<VertexData3D>& data)
         pData->normal = data[i].normal;
         pData->colour = data[i].colour;
         pData->uv = data[i].uv;
-        pData->texture = data[i].texture;
+        // pData->texture = data[i].texture;
         pData++;
     }
     unmapBuffer();
@@ -113,14 +113,15 @@ void VertexBuffer::unbind()
 
 void* VertexBuffer::mapBuffer()
 {
-    bind();
+    glBindBuffer(GL_ARRAY_BUFFER, m_id);
     this->m_pDataMap = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+    return m_pDataMap;
 }
 
 void VertexBuffer::unmapBuffer()
 {
-    glUnmapBuffer(GL_ARRAY_BUFFER);
-    glBindBuffer(GL_ARRAY_BUFFER, m_id);
+    GLboolean result = glUnmapBuffer(GL_ARRAY_BUFFER);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 unsigned int VertexBuffer::getId() const

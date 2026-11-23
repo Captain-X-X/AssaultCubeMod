@@ -2,7 +2,7 @@
 #define GLVERTEXBUFFER_H
 
 #include "pch.h"
-#include "renderer/vertexdata.h"
+#include "../../types/VertexData.h"
 
 // #define STRIDE(a, b) a * sizeof(b)
 #define STRIDE(b) sizeof(b)
@@ -35,6 +35,9 @@ public:
     void unbind();
     void* mapBuffer();
     void unmapBuffer();
+
+    template<typename t>
+    t mapBufferA() { return (t)mapBuffer(); }
 
     // getters
     unsigned int getId() const;

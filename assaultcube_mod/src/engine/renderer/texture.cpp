@@ -8,6 +8,9 @@
 
 TextureManager g_TextureMgr;
 
+Texture *notexture = NULL, *noworldtexture = NULL;
+Texture notexture_noptr, noworldtexture_noptr;
+
 #define FUNCNAME(name) name##1
 #define DEFPIXEL uint OP(r, 0);
 #define PIXELOP OP(r, 0);
@@ -59,9 +62,6 @@ void scaletexture(uchar *src, uint sw, uint sh, uint bpp, uchar *dst, uint dw, u
         }
     }
 }
-
-Texture *notexture = NULL, *noworldtexture = NULL;
-Texture notexture_noptr, noworldtexture_noptr;
 
 VAR(hwtexsize, 1, 0, 0);
 VAR(hwmaxaniso, 1, 0, 0);
@@ -147,34 +147,6 @@ bool silent_texture_load = false;
 VARFP(hirestextures, 0, 1, 1, initwarning("texture resolution", INIT_LOAD));
 bool uniformtexres = !hirestextures;
 
-GLenum texformat(int bpp)
-{
-    switch(bpp) {
-    case 8: return GL_LUMINANCE;
-    case 16: return GL_LUMINANCE_ALPHA;
-    case 24: return GL_RGB;
-    case 32: return GL_RGBA;
-    default: return 0;
-    }
-}
-
-GLuint loadsurface(const char *texname, int &xs, int &ys, int &bpp, int clamp = 0, bool mipmap = true, bool canreduce = false, float scale = 1.0f, bool trydl = false)
-{
-    unsigned char* data = stbi_load(texname, &xs, &ys, &bpp, 0);
-    if (!data) {
-        // printf("Failed to load texture: %s\n", texname);
-        return 0;
-    }
-    bpp = bpp*8;
-    GLenum format = GL_RGBA;
-    format = texformat(bpp);
-    GLuint id;
-    glGenTextures(1, &id);
-    createtexture(id, xs, ys, (void*)data, clamp, mipmap, canreduce, format);
-    stbi_image_free(data);
-    return id;
-}
-
 void texturereset() 
 { 
     if(execcontext==IEXC_MAPCFG) {
@@ -202,7 +174,6 @@ void Texture::scaleTexture()
     uint dw = m_width * m_scale, dh = m_height * m_scale;
     uchar *buf = new uchar[dw*dh*m_bpp];
     scaletexture(m_pixels, m_width, m_height, m_bpp, buf, dw, dh);
-    // delete[] (uchar *)s->pixels;
     m_width = dw;
     m_height = dh;
     m_pixels = buf;
@@ -221,21 +192,20 @@ Texture::~Texture()
 
 void Texture::preset(const std::string& file, int clamp, bool mipmap, bool canreduce, float scale)
 {
+    m_id = 0;
     m_file = file;
     m_clamp = clamp;
     m_mipmap = mipmap;
     m_canreduce = canreduce;
-    m_id = 0;
     m_scale = scale;
     m_preset = true;
 }
 
 bool Texture::load(const std::string& file, int clamp, bool mipmap, bool canreduce, float scale)
 {
-    m_file = file;
-    m_clamp = clamp;
-    m_mipmap = mipmap;
-    m_canreduce = canreduce;
+    if (file.empty()) {
+        return false;
+    }
     
     unsigned char* data = stbi_load(file.c_str(), &m_width, &m_height, &m_bpp, 0);
     if (!data) {
@@ -243,9 +213,13 @@ bool Texture::load(const std::string& file, int clamp, bool mipmap, bool canredu
         return false;
     }
     
-    m_bpp = m_bpp*8;
-    GLenum format = GL_RGBA;
-    format = texformat(m_bpp);
+    m_file = file;
+    m_clamp = clamp;
+    m_mipmap = mipmap;
+    m_canreduce = canreduce;
+    m_bpp = m_bpp * 8;
+    unsigned int format = GL_GetTextureFormat(m_bpp);
+    
     glGenTextures(1, &m_id);
     createtexture(m_id, m_width, m_height, (void*)data, clamp, mipmap, canreduce, format);
 
@@ -271,6 +245,39 @@ bool Texture::load()
     return false;
 }
 
+bool Texture::createImage(const std::string& name, unsigned char* data, int w, int h, unsigned int colourFormat)
+{
+    // glGenTextures(1, &m_id);
+    m_width = w;
+    m_height = h;
+    m_file = name;
+    // if (m_id == 0) {
+    //     printf("failed to create texture!\n");
+    //     return false;
+    // }
+    glGenTextures(1, &m_id);
+    glBindTexture(GL_TEXTURE_2D, m_id);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        colourFormat,
+        w,
+        h,
+        0,
+        colourFormat,
+        GL_UNSIGNED_BYTE,
+        data
+    );
+
+    return true;
+}
+
 bool Texture::reload()
 {
     if (m_file.empty()) {
@@ -280,7 +287,7 @@ bool Texture::reload()
     if (isValid()) {
         destroy();
     }
-    return load(m_file.c_str(), m_clamp, m_mipmap, m_canreduce);
+    return load(m_file.c_str(), m_clamp, m_mipmap, m_canreduce, m_scale);
 }
 
 void Texture::destroy()
@@ -333,10 +340,24 @@ TextureManager::~TextureManager()
 
 void TextureManager::shutdown()
 {
-    for (size_t i = 0; i < m_textures.size(); i++) {
-        if (m_textures[i]) {
-            m_textures[i]->destroy();
+    if (m_textures.empty() == false) {
+        for (size_t i = 0; i < m_textures.size(); i++) {
+            if (m_textures[i]) {
+                m_textures[i]->destroy();
+            }
         }
+        std::vector<std::shared_ptr<Texture>> emptyTextures;
+        m_textures.swap(emptyTextures);
+    }
+
+    if (m_texturesDelayedLoad.empty() == false) {
+        for (size_t i = 0; i < m_texturesDelayedLoad.size(); i++) {
+            if (m_texturesDelayedLoad[i]) {
+                m_texturesDelayedLoad[i]->destroy();
+            }
+        }
+        std::vector<std::shared_ptr<Texture>> emptyTexturesDelay;
+        m_texturesDelayedLoad.swap(emptyTexturesDelay);
     }
 }
 
@@ -385,9 +406,9 @@ Texture* TextureManager::get(unsigned int textureIndex)
         return m_textures[textureIndex].get();
     }
 
-    if (m_mloutput) {
-        printf("check: failed to get texture: %d ... %d\n", textureIndex, m_textures.size());
-    }
+    // if (m_mloutput) {
+    //     printf("check: failed to get texture: %d ... %ld\n", textureIndex, m_textures.size());
+    // }
     return nullptr;
 }
 
@@ -397,13 +418,13 @@ Texture* TextureManager::getByFileName(const std::string& fileName)
         if (m_textures[i]) {
             // printf("texture check = %s != %s\n", fileName.c_str(), m_textures[i]->getFileName().c_str());
             if (m_textures[i]->getFileName() == fileName) {
-                // return m_textures[i].get();
+                return m_textures[i].get();
             }
         }
     }
-    if (m_mloutput) {
-        printf("check: failed to get texture: %s\n", fileName.c_str());
-    }
+    // if (m_mloutput) {
+    //     printf("check: failed to get texture: %s\n", fileName.c_str());
+    // }
     return nullptr;
 }
 
@@ -416,25 +437,22 @@ Texture* TextureManager::getDelayedLoadTexture(unsigned int textureIndex)
         return m_texturesDelayedLoad[textureIndex].get();
     }
 
-    if (m_mloutput) {
-        printf("check dlt: failed to get texture: %d ... %d\n", textureIndex, m_texturesDelayedLoad.size());
-    }
+    // if (m_mloutput) {
+    //     printf("check dlt: failed to get texture: %d ... %ld\n", textureIndex, m_texturesDelayedLoad.size());
+    // }
     return nullptr;
 }
 
 bool TextureManager::reload(Texture &t)
 {
-    if(t.isValid()) {
-        return true;
-    }
     return t.reload();
 }
 
-bool TextureManager::reload(const char *name)
+bool TextureManager::reload(const std::string& file)
 {
     for (size_t i = 0; i < m_textures.size(); i++) {
         if (m_textures[i]) {
-            if (m_textures[i]->getFileName() == name) {
+            if (m_textures[i]->getFileName() == file) {
                 return m_textures[i]->reload();
             }
         }

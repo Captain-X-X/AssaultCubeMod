@@ -11,7 +11,8 @@ VAR(al_rollofffactor, 0, 100, 1000000);
 
 // represents an OpenAL source, an audio emitter in the 3D world
 
-source::source() : id(0), owner(NULL), locked(false), valid(false), priority(SP_NORMAL)
+source::source() 
+    : id(0), owner(NULL), locked(false), valid(false), priority(SP_NORMAL)
 {
     valid = generate();
     ASSERT(!valid || alIsSource(id));
@@ -272,14 +273,14 @@ bool sbuffer::load(bool trydl)
             {
                 formatstring(filepath)("packages/audio/%s%s", name, exts[i]);
                 stream *f = openfile(path(filepath), "rb");
-                if(!f && k>0 && trydl) // only try donwloading after trying all extensions
-                {
-                    requirepackage(PCK_AUDIO, filepath);
-                    bool skip = false;
-                    loopj(sizeof(exts)/sizeof(exts[0])) if(strstr(name, exts[j])) skip = true;  // don't try extensions if name already has a known extension
-                    if(skip) break;
-                    continue;
-                }
+                // if(!f && k>0 && trydl) // only try donwloading after trying all extensions
+                // {
+                //     // requirepackage(PCK_AUDIO, filepath);
+                //     bool skip = false;
+                //     loopj(sizeof(exts)/sizeof(exts[0])) if(strstr(name, exts[j])) skip = true;  // don't try extensions if name already has a known extension
+                //     if(skip) break;
+                //     continue;
+                // }
                 if(!f) continue;
 
                 size_t len = strlen(filepath);

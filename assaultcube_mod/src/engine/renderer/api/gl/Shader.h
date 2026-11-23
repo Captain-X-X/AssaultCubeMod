@@ -8,7 +8,7 @@ class Shader
 private:
     std::string m_file;
     unsigned int m_id;
-    std::unordered_map<std::string, unsigned int> m_uniformLocations;
+    std::unordered_map<std::string, int> m_uniformLocations;
 
     int getUniform(const std::string& name);
 

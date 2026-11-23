@@ -8,7 +8,7 @@ class IndexBuffer
 private:
     unsigned int m_id;
     unsigned int m_size;
-    unsigned int* m_pIndexDataMap;
+    void* m_pIndexDataMap;
 
 public:
     IndexBuffer();
@@ -19,7 +19,7 @@ public:
 
     void bind();
     void unbind();
-    void mapBuffer();
+    void* mapBuffer();
     void addData(unsigned int* indexArray, unsigned int arraySize);
     void addData(std::vector<unsigned int>& indis);
     void unmapBuffer();

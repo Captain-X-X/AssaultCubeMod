@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "shader.h"
+#include "Shader.h"
 #include "glutil.h"
 #include "tools/filestream.h"
 
@@ -8,7 +8,11 @@ int Shader::getUniform(const std::string& name)
     if(m_uniformLocations.find(name) != m_uniformLocations.end()) {
         return m_uniformLocations[name];
     }
-    unsigned int location = glGetUniformLocation(m_id, name.c_str());
+    int location = glGetUniformLocation(m_id, name.c_str());
+    if (location == -1) {
+        printf("failed to get uniform location: %s\n", name.c_str());
+        return -1;
+    }
     m_uniformLocations[name] = glGetUniformLocation(m_id, name.c_str());
     return location;
 }
@@ -98,6 +102,7 @@ void Shader::destroy()
 {
     if(m_id != NULL) {
         glDeleteProgram(m_id);
+        printf("========================shader destroyed!\n");
         m_id = 0;
     }
 }
@@ -139,12 +144,16 @@ void Shader::setVec4(const std::string& name, const vec4_t& value)
 
 void Shader::setMat3(const std::string& name, const mat3_t& value)
 {
-    glUniformMatrix3fv(getUniform(name), 1, false, (float*)&value.elements);
+    glUniformMatrix3fv(getUniform(name), 1, GL_FALSE, (float*)&value.v);
 }
 
 void Shader::setMat4(const std::string& name, const mat4_t& value)
 {
-    glUniformMatrix4fv(getUniform(name), 1, false, (float*)&value.v);
+    int loc = getUniform(name);
+    if (loc == -1) {
+        return;
+    }
+    glUniformMatrix4fv(getUniform(name), 1, GL_FALSE, value.v);
 }
 
 // getters

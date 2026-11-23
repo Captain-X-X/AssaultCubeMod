@@ -1,164 +1,191 @@
-#ifndef CMEVECTORMATHS_H
-#define CMEVECTORMATHS_H
+#ifndef VECTORMATHS_H
+#define VECTORMATHS_H
 #include "maths_func.h"
 #include "tools/cube_types.h"
 
 /*
 * ==========
-* vector of X,Y
+* Vector FLOAT 2
 * ==========
 */
-typedef struct vec2_t {
-    float x;
-    float y;
+class Vector2 
+{
+public:
+    float x, y;
 
-    vec2_t(float _v = 0.0f);
-    vec2_t(float _x, float _y);
+public:
+    // Vector2() { }
+    Vector2(float _x = 0.0f, float _y = 0.0f);
+    Vector2(float _v);
 
-    vec2_t operator*(float _v);
-    vec2_t operator/(float _v);
-    vec2_t operator*(const vec2_t& _v);
-    vec2_t operator/(const vec2_t& _v);
-} Vector2, vec2;
+    Vector2 operator*(float _v);
+    Vector2 operator/(float _v);
+    Vector2 operator*(const Vector2& _v);
+    Vector2 operator/(const Vector2& _v);
+};
+typedef Vector2 vec2;
+typedef Vector2 vec2_t;
 
 /*
 * ==========
-* vector of X,Y,Z
+* Vector FLOAT 3
 * ==========
 */
-typedef struct vec3_t {
+class Vector3 
+{
+public:
     union {
         struct { float x, y, z; };
         float v[3];
         int i[3];
     };
 
-    vec3_t();
-    vec3_t(float a, float b, float c);
-    vec3_t(float *v);
-    vec3_t(const vec2_t& _v2, float _z);
+public:
+    // Vector3() { }
+    Vector3(float _x = 0.0f, float _y = 0.0f, float _z = 0.0f);
+    Vector3(float *v);
+    Vector3(const vec2_t& _v2, float _z);
 
     float &operator[](int i);
     float operator[](int i) const;
 
     bool iszero() const;
-    bool operator==(const vec3_t &o) const;
-    bool operator!=(const vec3_t &o) const;
-    vec3_t operator-(const vec3_t& _v) const;
-    vec3_t operator-() const;
-    vec3_t &mul(float f);
-    vec3_t &div(float f);
-    vec3_t &add(float f);
-    vec3_t &sub(float f);
-    vec3_t &add(const vec3_t &o);
-    vec3_t &sub(const vec3_t &o);
+    bool operator==(const Vector3 &o) const;
+    bool operator!=(const Vector3 &o) const;
+    Vector3 operator-(const Vector3& _v) const;
+    Vector3 operator-() const;
+    Vector3 &mul(float f);
+    Vector3 &div(float f);
+    Vector3 &add(float f);
+    Vector3 &sub(float f);
+    Vector3 &add(const Vector3 &o);
+    Vector3 &sub(const Vector3 &o);
     float squaredlen() const;
     float sqrxy() const;
-    float dot(const vec3_t &o) const;
-    float dotxy(const vec3_t &o) const;
+    float dot(const Vector3 &o) const;
+    float dotxy(const Vector3 &o) const;
     float magnitude() const;
-    vec3_t &normalize();
+    Vector3 &normalize();
 
     // should NOT be used 
     float fmag() const;
     float ufmag() const;
     float fmagxy() const;
     float ufmagxy() const;
-    float dist(const vec3_t &e) const;
-    float dist(const vec3_t &e, vec3_t &t) const;
-    float distxy(const vec3_t &e) const;
+    float dist(const Vector3 &e) const;
+    float dist(const Vector3 &e, Vector3 &t) const;
+    float distxy(const Vector3 &e) const;
     float magnitudexy() const;
-    bool reject(const vec3_t &o, float max) const;
-    static vec3_t cross(const vec3_t &a, const vec3_t &b);
-    float cxy(const vec3_t &a);
+    bool reject(const Vector3 &o, float max) const;
+    static Vector3 cross(const Vector3 &a, const Vector3 &b);
+    float cxy(const Vector3 &a);
     void rotate_around_z(float angle);
     void rotate_around_x(float angle);
     void rotate_around_y(float angle);
-    vec3_t &rotate(float angle, const vec3_t &d);
-    vec3_t &rotate(float c, float s, const vec3_t &d);
-    void orthogonal(const vec3_t &d);
-} Vector3, vec, vec3;
+    Vector3 &rotate(float angle, const Vector3 &d);
+    Vector3 &rotate(float c, float s, const Vector3 &d);
+    void orthogonal(const Vector3 &d);
+};
+typedef Vector3 vec;
+typedef Vector3 vec3;
+typedef Vector3 vec3_t;
 
-bool htcmp(const vec3_t& x, const vec3_t& y);
-void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec3_t& m);
-void vectoyawpitch(const vec3_t& v, float &yaw, float &pitch);
+bool htcmp(const Vector3& x, const Vector3& y);
+void vecfromyawpitch(float yaw, float pitch, int move, int strafe, Vector3& m);
+void vectoyawpitch(const Vector3& v, float &yaw, float &pitch);
 
 /*
 * ==========
-* vector of X,Y,Z,W
+* Vector FLOAT 4
 * ==========
 */
-typedef struct vec4_t {
+class Vector4 
+{
+public:
     float x, y, z, w;
 
-    vec4_t(float _v = 0.0f);
-    vec4_t(float _x, float _y, float _z, float _w);
-    vec4_t(const vec3_t& _v, float _a);
-    vec4_t(float* mValue) : x(mValue[0]), y(mValue[1]), z(mValue[2]), w(mValue[3]) { }
+public:
+    // Vector4() { }
+    Vector4(float _x = 0.0f, float _y = 0.0f, float _z = 0.0f, float _w = 0.0f);
+    // Vector4(float _v = 0.0f);
+    Vector4(float* _v);
+    Vector4(const Vector3& _v, float _a);
 
-    vec4_t operator*(float _v);
-    vec4_t operator/(float _v);
-    vec4_t operator*(const vec4_t& _v);
-    vec4_t operator/(const vec4_t& _v);
-} Vector4, vec4;
+    Vector4 operator*(float _v);
+    Vector4 operator/(float _v);
+    Vector4 operator*(const Vector4& _v);
+    Vector4 operator/(const Vector4& _v);
+};
+typedef Vector4 vec4;
+typedef Vector4 vec4_t;
 
 /*
 * ==========
 * vector of INT X,Y,Z
 * ==========
 */
-typedef struct ivec3_t {
+class ivec3 
+{
+public:
     union {
         struct { int x, y, z; };
         int v[3];
     };
 
-    ivec3_t();
-    ivec3_t(const vec3_t &v);
-    ivec3_t(int a, int b, int c);
+public:
+    ivec3(int _x = 0, int _y = 0, int _z = 0);
+    ivec3(const Vector3 &v);
+    ~ivec3();
 
-    vec3_t tovec() const ;
+    Vector3 tovec() const ;
 
     int &operator[](int i);
     int  operator[](int i) const;
 
-    bool operator==(const ivec3_t &v) const;
-    bool operator!=(const ivec3_t &v) const;
-    ivec3_t &mul(int n);
-    ivec3_t &div(int n);
-    ivec3_t &add(int n);
-    ivec3_t &sub(int n);
-    ivec3_t &add(const ivec3_t &v);
-    ivec3_t &sub(const ivec3_t &v);
-    ivec3_t &mask(int n);
-    ivec3_t &cross(const ivec3_t &a, const ivec3_t &b);
-    int dot(const ivec3_t &o) const;
-} ivec;
+    bool operator==(const ivec3 &v) const;
+    bool operator!=(const ivec3 &v) const;
+    ivec3 &mul(int n);
+    ivec3 &div(int n);
+    ivec3 &add(int n);
+    ivec3 &sub(int n);
+    ivec3 &add(const ivec3 &v);
+    ivec3 &sub(const ivec3 &v);
+    ivec3 &mask(int n);
+    ivec3 &cross(const ivec3 &a, const ivec3 &b);
+    int dot(const ivec3 &o) const;
+};
+typedef ivec3 ivec;
+typedef ivec3 ivec3_t;
 
-bool htcmp(const ivec3_t &x, const ivec3_t &y);
-uint hthash(const ivec3_t &k);
+bool htcmp(const ivec3 &x, const ivec3 &y);
+uint hthash(const ivec3 &k);
 
 /*
 * ==========
 * vector of BYTE X,Y,Z
 * ==========
 */
-typedef struct bvec3_t {
+class bvec3 
+{
+public:
     union {
         struct { uchar x, y, z; };
         uchar v[3];
     };
 
-    bvec3_t();
-    bvec3_t(uchar x, uchar y, uchar z);
-    bvec3_t(const vec3_t &v);
+public:
+    bvec3(uchar x = 0, uchar y = 0, uchar z = 0);
+    bvec3(const Vector3 &v);
+    ~bvec3();
 
     uchar &operator[](int i);
     uchar  operator[](int i) const;
-    bool operator==(const bvec3_t &v) const;
-    bool operator!=(const bvec3_t &v) const;
+    bool operator==(const bvec3 &v) const;
+    bool operator!=(const bvec3 &v) const;
     bool iszero() const;
-    vec3_t tovec() const;
-} bvec;
+    Vector3 tovec() const;
+};
+typedef bvec3 bvec;
+typedef bvec3 bvec3_t;
 
 #endif

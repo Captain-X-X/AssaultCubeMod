@@ -1,4 +1,4 @@
-#include "input.h"
+#include "Input.h"
 #include "client.h"
 #include "physics.h"
 
@@ -17,7 +17,7 @@ bool skipmousemotion(SDL_Event &event)
     return false;
 }
 
-void CInput::handleInputEvent(SDL_Event& event, windowInfo_s* pwindowInfo)
+void CInput::handleEvent(SDL_Event& event, CWindow* pWindow)
 {
     int kIndex = 0;
     int bIndex = 0;
@@ -25,7 +25,7 @@ void CInput::handleInputEvent(SDL_Event& event, windowInfo_s* pwindowInfo)
     int lasttype = 0, lastbut = 0;
     int tdx=0,tdy=0;
 
-    SDL_Surface* window = pwindowInfo->pWindow;
+    SDL_Surface* window = pWindow->getSDLSurface();
 
     switch (event.type) {
     case SDL_KEYDOWN:
@@ -38,7 +38,7 @@ void CInput::handleInputEvent(SDL_Event& event, windowInfo_s* pwindowInfo)
         kIndex = event.key.keysym.sym;
         if (event.key.state == SDL_PRESSED) {
             if (m_kStates[kIndex] == keyState_t::KEY_PRESSED) {
-                m_kStates[kIndex] == keyState_t::KEY_HELD;
+                m_kStates[kIndex] = keyState_t::KEY_HELD;
             }
             else {
                 m_kStates[kIndex] = keyState_t::KEY_PRESSED;
@@ -106,6 +106,7 @@ void CInput::handleInputEvent(SDL_Event& event, windowInfo_s* pwindowInfo)
 CInput::CInput()
 {
     // g_client.eventHandler.registerRecver(this);
+    // g_client.window.getWinEventHandler().registerRecver(this);
 }
 
 CInput::~CInput()

@@ -1,4 +1,4 @@
-#include "indexbuffer.h"
+#include "IndexBuffer.h"
 
 IndexBuffer::IndexBuffer()
     : m_id(NULL), m_size(NULL), m_pIndexDataMap(nullptr)
@@ -42,10 +42,11 @@ void IndexBuffer::unbind()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void IndexBuffer::mapBuffer()
+void* IndexBuffer::mapBuffer()
 {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id);
-    m_pIndexDataMap = (unsigned int*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+    m_pIndexDataMap = glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+    return m_pIndexDataMap;
 }
 
 void IndexBuffer::addData(unsigned int* indexArray, unsigned int arraySize)
@@ -67,7 +68,7 @@ void IndexBuffer::addData(std::vector<unsigned int>& indexArray)
 void IndexBuffer::unmapBuffer()
 {
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 // getters

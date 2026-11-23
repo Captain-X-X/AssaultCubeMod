@@ -1,6 +1,6 @@
 #ifndef INPUT_H
 #define INPUT_H
-#include "window.h"
+#include "Window.h"
 
 enum class keyState_t : char {
     KEY_DOWN,
@@ -16,10 +16,10 @@ enum class buttonState_t : char {
     BTN_HELD,
 };
 
-class CInput
+class CInput : public iEventRecv
 {
 public:
-    void handleInputEvent(SDL_Event& event, windowInfo_s* pwindowInfo);
+    void handleEvent(SDL_Event& event, CWindow* pWindow) override;
 
 private:
     keyState_t m_kStates[1024];

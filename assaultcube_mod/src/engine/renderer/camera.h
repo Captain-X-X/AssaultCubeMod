@@ -5,13 +5,13 @@
 
 class Camera
 {
-public:
-    Vector3 viewAngles;
+private:
+    Vector3 m_viewAngles;
     // Vector3 dir;
     // Vector3 forward;
     // Vector3 left;
-    Vector3 origin;
-    Matrix4x4 viewMatrix;
+    Vector3 m_origin;
+    Matrix4 m_viewMatrix;
 
 public:
     Camera();
@@ -20,7 +20,7 @@ public:
     void create(const Vector3& default_angles = Vector3(0.0f, 0.0f, 0.0f));
     void setViewAngles(const Vector3& newAngles);
     void followPosition(const Vector3& pos);
-    Matrix4x4& getViewMatrixRaw() ; // calculate and then return view matrix
+    Matrix4& getViewMatrixRaw() ; // calculate and then return view matrix
 };
 
 #endif
