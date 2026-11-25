@@ -21,7 +21,7 @@ extern float modelpitch;
 extern int animationinterpolationtime;
 
 mesh::mesh() 
-    : name(0), owner(0), skin(notexture), tex(0), dynidx(0), dyndraws(0), statlist(0)
+    : name(0), owner(0), skin(notexture), tex(0), statlist(0)
 {
 
 }
@@ -35,8 +35,8 @@ mesh::~mesh()
     // DELETEA(shareverts);
     // DELETEA(tris);
     if(statlist) glDeleteLists(statlist, 1);
-    DELETEA(dynidx);
-    DELETEA(dyndraws);
+    // DELETEA(dynidx);
+    // DELETEA(dyndraws);
 }
 
 void mesh::genstrips()
@@ -46,12 +46,13 @@ void mesh::genstrips()
     vector<ushort> idxs;
     vector<drawcall> draws;
     ts.buildstrips(idxs, draws);
-    dynidx = new ushort[idxs.length()];
-    memcpy(dynidx, idxs.getbuf(), idxs.length()*sizeof(ushort));
-    dynlen = idxs.length();
-    dyndraws = new drawcall[draws.length()];
-    memcpy(dyndraws, draws.getbuf(), draws.length()*sizeof(drawcall));
-    numdyndraws = draws.length();
+
+    m_dynidx.resize(idxs.length());
+    memcpy(m_dynidx.data(), idxs.getbuf(), idxs.length()*sizeof(ushort));
+    // dynlen = idxs.length();
+    m_dyndraws.resize(draws.length());
+    memcpy(m_dyndraws.data(), draws.getbuf(), draws.length()*sizeof(drawcall));
+    // numdyndraws = draws.length();
 }
 
 dyncacheentry* mesh::gendynverts(animstate &as, anpos &cur, anpos *prev, float ai_t)
@@ -406,19 +407,18 @@ void mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
 
     bool builddlist = isstat && !owner->model->vertexlight && mdldlist;
     if(builddlist) glNewList(statlist = glGenLists(1), GL_COMPILE);
-    loopi(numdyndraws)
-    {
-        const drawcall &d = dyndraws[i];
-        if(hasDRE && !builddlist) glDrawRangeElements(d.type, d.minvert, d.maxvert, d.count, GL_UNSIGNED_SHORT, &dynidx[d.start]);
-        else glDrawElements(d.type, d.count, GL_UNSIGNED_SHORT, &dynidx[d.start]);
+    for (size_t i = 0; i < m_dyndraws.size(); i++) {
+        const drawcall& d = m_dyndraws[i];
+        if(hasDRE && !builddlist) glDrawRangeElements(d.type, d.minvert, d.maxvert, d.count, GL_UNSIGNED_SHORT, &m_dynidx[d.start]);
+        else glDrawElements(d.type, d.count, GL_UNSIGNED_SHORT, &m_dynidx[d.start]);
     }
     if(builddlist)
     {
         glEndList();
         glCallList(statlist);
-        statlen = dynlen;
+        statlen = static_cast<int>(m_dynidx.size());
     }
-    xtraverts += dynlen;
+    xtraverts += static_cast<int>(m_dynidx.size());
 }
 
 int mesh::findvert(int axis, int dir)

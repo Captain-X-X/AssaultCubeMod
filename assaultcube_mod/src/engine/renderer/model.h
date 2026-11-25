@@ -70,8 +70,17 @@ struct part
 * base model
 * ==========
 */
-struct model
+enum class ModelTypes_t : unsigned char {
+    NONE,
+    MDL_MD2,
+    MDL_MD3,
+};
+class model
 {
+private:
+    ModelTypes_t m_type;
+
+public:
     bool cullface, vertexlight, alphablend;  //ALX Alpha channel models
     float alphatest, translucency, scale, radius, shadowdist;
     vec3_t translate;
@@ -88,18 +97,17 @@ struct model
     static int matrixpos;
     static modelcache dynalloc, statalloc;
 
-    //model() : cullface(true), vertexlight(false), alphatest(0.9f), translucency(0.25f), scale(1), radius(0), shadowdist(0), translate(0, 0, 0), cachelimit(8), batch(-1) {}
-    // model();
-    model(const char *name);
+public:
+    model();
+    model(const char *name, ModelTypes_t mtype);
     virtual ~model();
     
-    virtual bool load() = 0;
+    virtual bool load() { return false; };
     virtual char *name();
-    virtual int type() = 0;
     
     virtual void cleanup();
     
-    virtual void render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a = NULL, float scale = 1.0f) = 0;
+    virtual void render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a = NULL, float scale = 1.0f);
     virtual void setskin(int tex = 0);
     
     virtual void genshadows(float height, float rad);
@@ -113,6 +121,9 @@ struct model
     virtual float calcradius();
     virtual void calcneighbors();
     virtual void calcbbs();
+
+    // getters
+    ModelTypes_t getType() const { return m_type; }
 };
 
 struct mapmodelinfo { 

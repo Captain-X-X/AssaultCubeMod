@@ -136,7 +136,7 @@ struct vector
         return buf[ulen++];
     }
 
-    T &dup()
+    T &dup() // std::push_back(T.back()) if no ref is needed
     {
         if (ulen == alen)
             growbuf(ulen + 1);

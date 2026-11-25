@@ -5,12 +5,18 @@
 
 struct modelattach;
 class dynent;
-struct md2 : model
-{
-    md2(const char *name);
 
-    int type();
-    void render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a, float scale);
+/*
+* ==========
+* MD2 model loader
+* ==========
+*/
+class md2 : public model 
+{
+public:
+    md2(const char *name);
+    ~md2();
+
     void rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, modelattach *a);
     bool load();
 };

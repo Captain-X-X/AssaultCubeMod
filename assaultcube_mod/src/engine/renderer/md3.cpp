@@ -58,54 +58,55 @@ struct md3part : part
 {
     bool load(char *path)
     {
-        if(filename) return true;
+        if(filename) {
+            return true;
+        }
 
-        stream *f = openfile(path, "rb");
-        if(!f) return false;
+        std::ifstream fileIn(path, std::ios::in);
+        if (!fileIn.is_open()) {
+            return false;
+        }
+
         md3header header;
-        f->read(&header, sizeof(md3header));
+        fileIn.read((char*)&header, sizeof(md3header));
         lilswap(&header.version, 1);
         lilswap(&header.flags, 9);
-        if(strncmp(header.id, "IDP3", 4) != 0 || header.version != 15) // header check
-        {
-            delete f;
-            conoutf("md3: corrupted header");
+        if(strncmp(header.id, "IDP3", 4) != 0 || header.version != 15) { // header check 
+            fileIn.close();
             return false;
         }
 
         numframes = header.numframes;
         numtags = header.numtags;
-        if(numtags)
-        {
+        if(numtags) {
             tags = new tag[numframes*numtags];
-            f->seek(header.ofs_tags, SEEK_SET);
+            fileIn.seekg(header.ofs_tags);
             md3tag tag;
 
-            loopi(header.numframes*header.numtags)
-            {
-                f->read(&tag, sizeof(md3tag));
+            for (int i = 0; i < (header.numframes * header.numtags); i++) {
+                fileIn.read((char*)&tag, sizeof(md3tag));
                 lilswap((float *)&tag.pos, 12);
-                if(tag.name[0] && i<header.numtags) tags[i].name = newstring(tag.name);
+                if(tag.name[0] && i<header.numtags) {
+                    tags[i].name = newstring(tag.name);
+                }
                 tags[i].pos = vec3_t(tag.pos.y, tag.pos.x, tag.pos.z);
                 memcpy(tags[i].transform, tag.rotation, sizeof(tag.rotation));
                 // undo the x/y swap
-                loopj(3) swap(tags[i].transform[0][j], tags[i].transform[1][j]);
+                for (int j = 0; j < 3; j++) swap(tags[i].transform[0][j], tags[i].transform[1][j]);
                 // then restore it
-                loopj(3) swap(tags[i].transform[j][0], tags[i].transform[j][1]);
+                for (int j = 0; j < 3; j++) swap(tags[i].transform[j][0], tags[i].transform[j][1]);
             }
             links = new linkedpart[numtags];
         }
 
         int mesh_offset = header.ofs_meshes;
-        loopi(header.nummeshes)
-        {
+        for (int i = 0; i < header.nummeshes; i++) {
             md3meshheader mheader;
-            f->seek(mesh_offset, SEEK_SET);
-            f->read(&mheader, sizeof(md3meshheader));
+            fileIn.seekg(mesh_offset);
+            fileIn.read((char*)&mheader, sizeof(md3meshheader));
             lilswap(&mheader.flags, 10);
 
-            if(mheader.numtriangles <= 0)
-            {
+            if(mheader.numtriangles <= 0) {
                 mesh_offset += mheader.meshsize;
                 continue;
             }
@@ -116,29 +117,27 @@ struct md3part : part
 
             m.numtris = mheader.numtriangles;
             m.m_tris.resize(m.numtris);
-            f->seek(mesh_offset + mheader.ofs_triangles, SEEK_SET);
-            loopj(mheader.numtriangles)
-            {
+            fileIn.seekg(mesh_offset + mheader.ofs_triangles);
+            for (int j = 0; j < mheader.numtriangles; j++) {
                 md3triangle tri;
                 memset((void*)&tri, 0, sizeof(md3triangle));
-                f->read(&tri, sizeof(md3triangle)); // read the triangles
+                fileIn.read((char*)&tri, sizeof(md3triangle)); // read the triangles
                 lilswap((int *)&tri, 3);
-                loopk(3) m.m_tris[j].vert[k] = (ushort)tri.vertexindices[k];
+                for (int k = 0; k < 3; k++) m.m_tris[j].vert[k] = (ushort)tri.vertexindices[k];
             }
 
             m.numverts = mheader.numvertices;
             m.m_uvs.resize(m.numverts);
-            f->seek(mesh_offset + mheader.ofs_uv , SEEK_SET);
-            f->read(m.m_uvs.data(), 2*sizeof(float)*m.numverts); // read the UV data
+            fileIn.seekg(mesh_offset + mheader.ofs_uv);
+            fileIn.read((char*)m.m_uvs.data(), 2*sizeof(float)*m.numverts); // read the UV data
             lilswap(&m.m_uvs[0].x, 2*m.numverts);
 
             m.m_verts.resize(numframes*m.numverts + 1);
-            f->seek(mesh_offset + mheader.ofs_vertices, SEEK_SET);
-            loopj(numframes*mheader.numvertices)
-            {
+            fileIn.seekg(mesh_offset + mheader.ofs_vertices);
+            for (int j = 0; j < (numframes * mheader.numvertices); j++) {
                 md3vertex v = md3vertex();
                 // memset((void*)&v, 0, sizeof(md3vertex));
-                f->read(&v, sizeof(md3vertex)); // read the vertices
+                fileIn.read((char*)&v, sizeof(md3vertex)); // read the vertices
                 lilswap((short *)&v, 4);
 
                 m.m_verts[j].x = v.vertex[1] / 64.0f;
@@ -148,7 +147,7 @@ struct md3part : part
 
             mesh_offset += mheader.meshsize;
         }
-        delete f;
+        fileIn.close();
 
         filename = newstring(path);
         return true;
@@ -161,63 +160,21 @@ struct md3part : part
         model::matrixstack[0].rotate_around_z(180*RAD);
     }
 };
+
 /*
 * ==========
-* md3 model
+* MD3 model loader
 * ==========
 */
-md3::md3(const char *name) : model(name) {}
+md3::md3(const char *name) 
+    : model(name, ModelTypes_t::MDL_MD3) 
+{
 
-int md3::type() 
-{ 
-    return MDL_MD3; 
 }
 
-void md3::render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a, float scale)
-{
-    if(!loaded) return;
+md3::~md3() 
+{ 
 
-    if(a) for(int i = 0; a[i].tag; i++)
-    {
-        model *m = (model *)a[i].m;
-        if(!m)
-        {
-            if(a[i].pos) link(NULL, a[i].tag);
-            continue;
-        }
-        part *p = m->parts[0];
-        if(link(p, a[i].tag, a[i].pos)) p->index = parts.length()+i;
-    }
-
-    if(!cullface) glDisable(GL_CULL_FACE);
-    else if(anim&ANIM_MIRROR) glCullFace(GL_BACK);
-
-    if(stenciling)
-    {
-        shadowdir = vec3_t(0, 1/SQRT2, -1/SQRT2);
-        shadowdir.rotate_around_z((-shadowyaw-yaw-180.0f)*RAD);
-        shadowdir.rotate_around_y(-pitch*RAD);
-        (shadowpos = shadowdir).mul(shadowdist);
-    }
-
-    modelpos = o;
-    modelyaw = yaw;
-    modelpitch = pitch;
-
-    matrixpos = 0;
-    matrixstack[0].identity();
-    matrixstack[0].translate(o);
-    matrixstack[0].rotate_around_z((yaw+180)*RAD);
-    matrixstack[0].rotate_around_y(-pitch*RAD);
-    if(anim&ANIM_MIRROR || scale!=1) matrixstack[0].scale(scale, anim&ANIM_MIRROR ? -scale : scale, scale);
-    parts[0]->render(anim, varseed, speed, basetime, d);
-
-    if(!cullface) glEnable(GL_CULL_FACE);
-    else if(anim&ANIM_MIRROR) glCullFace(GL_FRONT);
-
-    if(a) for(int i = 0; a[i].tag; i++) link(NULL, a[i].tag);
-
-    if(d) d->lastrendered = lastmillis;
 }
 
 void md3::rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, modelattach *a)

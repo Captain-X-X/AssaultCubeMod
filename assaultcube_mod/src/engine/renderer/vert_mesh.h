@@ -61,7 +61,10 @@ struct mesh {
     std::vector<aabb_s>     m_aabbs;
     std::vector<ushort>     m_shareverts;
     std::vector<tri>        m_tris;
-    int numverts, numtris;
+    std::vector<ushort>     m_dynidx;
+    std::vector<drawcall>   m_dyndraws;
+    int numverts;
+    int numtris;
 
     Texture* skin;
     int tex;
@@ -70,10 +73,6 @@ struct mesh {
     modelcachelist<shadowcacheentry> shadowcache;
     modelcachelist<lightcacheentry> lightcache;
 
-    ushort *dynidx;
-    int dynlen;
-    drawcall *dyndraws;
-    int numdyndraws;
     GLuint statlist;
     int statlen;
 

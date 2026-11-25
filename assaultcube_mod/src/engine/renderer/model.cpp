@@ -243,7 +243,7 @@ void part::render(int anim, int varseed, float speed, int basetime, dynent *d)
     if (!calcanimstate(anim, varseed, speed, basetime, d, as))
         return;
 
-    if (!meshes[0]->dynidx)
+    if (meshes[0]->m_dynidx.empty())
         genstrips();
 
     anpos prev, cur;
@@ -628,17 +628,16 @@ void part::calcbbs()
 }
 
 //////////////////////////////////////////////////////////////////
-// model::model() 
-//     : cullface(true), vertexlight(false),  alphablend(false), alphatest(0.9f), translucency(0.25f), scale(1), 
-//         radius(0), shadowdist(0), translate(0, 0, 0), cachelimit(8), batch(-1)
-// {
+model::model()
+{
 
-// }
+}
 
-model::model(const char *name) 
+model::model(const char *name, ModelTypes_t mtype) 
     : cullface(true), vertexlight(false),  alphablend(false), alphatest(0.9f), translucency(0.25f), scale(1), 
         radius(0), shadowdist(0), translate(0, 0, 0), cachelimit(8), batch(-1), loaded(false)
 {
+    m_type = mtype;
     loadname = newstring(name);
 }
 
@@ -651,6 +650,112 @@ model::~model()
 char *model::name() 
 { 
     return loadname; 
+}
+
+void model::render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a, float scale)
+{
+    if (m_type == ModelTypes_t::NONE) {
+        return;
+    }
+
+    if(!loaded) {
+        return;
+    }
+
+    if (m_type == ModelTypes_t::MDL_MD2) {
+        if(a) {
+            for(int i = 0; a[i].tag; i++) {
+                if(a[i].pos) link(NULL, a[i].tag, a[i].pos);
+            }
+        }
+
+        if(!cullface) glDisable(GL_CULL_FACE);
+        else if(anim&ANIM_MIRROR) glCullFace(GL_BACK);
+
+        if(stenciling && !parts[0]->index) {
+            shadowdir = vec3_t(0, 1/SQRT2, -1/SQRT2);
+            shadowdir.rotate_around_z((-shadowyaw-yaw-180.0f)*RAD);
+            shadowdir.rotate_around_y(-pitch*RAD);
+            (shadowpos = shadowdir).mul(shadowdist);
+        }
+
+        modelpos = o;
+        modelyaw = yaw;
+        modelpitch = pitch;
+
+        matrixpos = 0;
+        matrixstack[0].identity();
+        matrixstack[0].translate(o);
+        matrixstack[0].rotate_around_z((yaw+180)*RAD);
+        matrixstack[0].rotate_around_y(-pitch*RAD);
+        if(anim&ANIM_MIRROR || scale!=1) matrixstack[0].scale(scale, anim&ANIM_MIRROR ? -scale : scale, scale);
+        parts[0]->render(anim, varseed, speed, basetime, d);
+
+        if(!cullface) glEnable(GL_CULL_FACE);
+        else if(anim&ANIM_MIRROR) glCullFace(GL_FRONT);
+
+        if(a) for(int i = 0; a[i].tag; i++)
+        {
+            if(a[i].pos) link(NULL, a[i].tag, NULL);
+
+            model *m = (model *)a[i].m;
+            if(!m) continue;
+            m->parts[0]->index = parts.length()+i;
+            m->setskin();
+            m->render(anim, varseed, speed, basetime, o, yaw, pitch, d, NULL, scale);
+        }
+
+        if(d) d->lastrendered = lastmillis;
+    }
+    else if (m_type == ModelTypes_t::MDL_MD3) {
+        if(a) {
+            for(int i = 0; a[i].tag; i++) {
+                model *m = (model *)a[i].m;
+                if(!m)
+                {
+                    if(a[i].pos) link(NULL, a[i].tag);
+                    continue;
+                }
+                part *p = m->parts[0];
+                if(link(p, a[i].tag, a[i].pos)) p->index = parts.length()+i;
+            }
+        }
+
+        if(!cullface) glDisable(GL_CULL_FACE);
+        else if(anim&ANIM_MIRROR) glCullFace(GL_BACK);
+
+        if(stenciling) {
+            shadowdir = vec3_t(0, 1/SQRT2, -1/SQRT2);
+            shadowdir.rotate_around_z((-shadowyaw-yaw-180.0f)*RAD);
+            shadowdir.rotate_around_y(-pitch*RAD);
+            (shadowpos = shadowdir).mul(shadowdist);
+        }
+
+        modelpos = o;
+        modelyaw = yaw;
+        modelpitch = pitch;
+
+        matrixpos = 0;
+        matrixstack[0].identity();
+        matrixstack[0].translate(o);
+        matrixstack[0].rotate_around_z((yaw+180)*RAD);
+        matrixstack[0].rotate_around_y(-pitch*RAD);
+        if(anim&ANIM_MIRROR || scale!=1) matrixstack[0].scale(scale, anim&ANIM_MIRROR ? -scale : scale, scale);
+        parts[0]->render(anim, varseed, speed, basetime, d);
+
+        if(!cullface) glEnable(GL_CULL_FACE);
+        else if(anim&ANIM_MIRROR) glCullFace(GL_FRONT);
+
+        if(a) { 
+            for(int i = 0; a[i].tag; i++) { 
+                link(NULL, a[i].tag); 
+            } 
+        }
+
+        if(d) { 
+            d->lastrendered = lastmillis; 
+        }
+    }
 }
 
 void model::cleanup()

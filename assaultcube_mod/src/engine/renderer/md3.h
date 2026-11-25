@@ -5,13 +5,18 @@
 
 struct modelattach;
 class dynent;
-struct md3 : model {
+
+/*
+* ==========
+* MD3 model loader
+* ==========
+*/
+class md3 : public model 
+{
+public:
     md3(const char *name);
-    ~md3() { }
+    ~md3();
     
-    int type();
-    
-    void render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a, float scale);
     void rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, modelattach *a);
     bool load();
 };

@@ -46,117 +46,114 @@ struct md2_frame
 
 struct md2part : part
 {
-    void gentcverts(int *glcommands, vector<tcvert> &tcverts, vector<ushort> &vindexes, vector<tri> &tris)
+    void gentcverts(std::vector<int>& glcommands, std::vector<Vector2>& tcverts, std::vector<ushort> &vindexes, std::vector<tri>& tris)
     {
         hashtable<ivec, int> tchash;
-        vector<ushort> idxs;
-        for(int *command = glcommands; (*command)!=0;)
-        {
+        std::vector<ushort> idxs;
+        for(int* command = glcommands.data(); (*command)!=0;) {
             int numvertex = *command++;
             bool isfan = numvertex<0;
             if(isfan) numvertex = -numvertex;
-            idxs.setsize(0);
-            loopi(numvertex)
-            {
+            idxs.clear();
+            for (int i = 0; i < numvertex; i++) {
                 union { int i; float f; } u, v;
                 u.i = *command++;
                 v.i = *command++;
                 int vindex = *command++;
                 ivec tckey(u.i, v.i, vindex);
                 int *idx = tchash.access(tckey);
-                if(!idx)
-                {
+                if(!idx) {
                     idx = &tchash[tckey];
-                    *idx = tcverts.length();
-                    tcvert &tc = tcverts.add();
-                    tc.u = u.f;
-                    tc.v = v.f;
-                    vindexes.add((ushort)vindex);
+                    *idx = tcverts.size();
+                    Vector2 uv;// = tcverts.add();
+                    uv.x = u.f;
+                    uv.y = v.f;
+                    vindexes.push_back((ushort)vindex);
+                    tcverts.push_back(uv);
                 }
-                idxs.add(*idx);
+                idxs.push_back(*idx);
             }
-            loopi(numvertex-2)
-            {
-                tri &t = tris.add();
-                if(isfan)
-                {
-                    t.vert[0] = idxs[0];
-                    t.vert[1] = idxs[i+1];
-                    t.vert[2] = idxs[i+2];
+            for (int i = 0; i < numvertex - 2; i++) {
+                tri tri;// = tris.add();
+                if(isfan) {
+                    tri.vert[0] = idxs[0];
+                    tri.vert[1] = idxs[i+1];
+                    tri.vert[2] = idxs[i+2];
                 }
-                else loopk(3) t.vert[k] = idxs[i&1 && k ? i+(1-(k-1))+1 : i+k];
+                else loopk(3) tri.vert[k] = idxs[i&1 && k ? i+(1-(k-1))+1 : i+k];
+                tris.push_back(tri);
             }
         }
     }
 
     bool load(char *path)
     {
-        if(filename) return true;
+        if(filename) {
+            return true;
+        }
 
-        stream *file = openfile(path, "rb");
-        if(!file) return false;
+        std::ifstream fileIn(path, std::ios::in);
+        if (!fileIn.is_open()) {
+            return false;
+        }
 
         md2_header header;
-        file->read(&header, sizeof(md2_header));
+        fileIn.read((char*)&header, sizeof(md2_header));
         lilswap((int *)&header, sizeof(md2_header)/sizeof(int));
 
-        if(header.magic!=844121161 || header.version!=8)
-        {
-            delete file;
+        if(header.magic!=844121161 || header.version!=8) {
+            fileIn.close();
             return false;
         }
 
         numframes = header.numframes;
 
-        mesh &m = *new mesh;
+        mesh& m = *new mesh;
         meshes.add(&m);
         m.owner = this;
 
-        int *glcommands = new int[header.numglcommands];
-        file->seek(header.offsetglcommands, SEEK_SET);
-        int numglcommands = (int)file->read(glcommands, sizeof(int)*header.numglcommands)/sizeof(int);
-        lilswap(glcommands, numglcommands);
-        if(numglcommands < header.numglcommands) memset(&glcommands[numglcommands], 0, (header.numglcommands-numglcommands)*sizeof(int));
+        std::vector<int> glCommands;
+        glCommands.resize(header.numglcommands);
+        fileIn.seekg(header.offsetglcommands);
+        fileIn.read((char*)glCommands.data(), sizeof(int) * header.numglcommands);
+        lilswap(glCommands.data(), glCommands.size());
 
-        vector<tcvert> tcgen;
-        vector<ushort> vgen;
-        vector<tri> trigen;
-        gentcverts(glcommands, tcgen, vgen, trigen);
-        delete[] glcommands;
+        if(glCommands.size() < header.numglcommands) {
+            memset(&glCommands[glCommands.size()], 0, (header.numglcommands-glCommands.size())*sizeof(int));
+        }
 
-        m.numverts = tcgen.length();
-        m.m_uvs.resize(m.numverts);
-        memcpy(m.m_uvs.data(), tcgen.getbuf(), m.numverts*sizeof(tcvert));
+        std::vector<ushort> vgen;
+        gentcverts(glCommands, m.m_uvs, vgen, m.m_tris);
 
-        m.numtris = trigen.length();
-        m.m_tris.resize(m.numtris);
-        memcpy(m.m_tris.data(), trigen.getbuf(), m.numtris*sizeof(tri));
-
+        m.numverts = m.m_uvs.size();
+        m.numtris = m.m_tris.size();
         m.m_verts.resize(m.numverts * numframes + 1);
 
-        md2_vertex *tmpverts = new md2_vertex[header.numvertices];
-        int frame_offset = header.offsetframes;
-        vec3_t *curvert = m.m_verts.data();
-        loopi(header.numframes)
-        {
-            md2_frame frame;
-            file->seek(frame_offset, SEEK_SET);
-            file->read(&frame, sizeof(md2_frame));
-            lilswap((float *)&frame, 6);
+        std::vector<md2_vertex> tmpverts;
+        tmpverts.resize(header.numvertices);
 
-            file->read(tmpverts, sizeof(md2_vertex)*header.numvertices);
-            loopj(m.numverts)
-            {
+        int frame_offset = header.offsetframes;
+        vec3_t* curvert = m.m_verts.data();
+        for (int i = 0; i < header.numframes; i++) {
+            md2_frame frame;
+            fileIn.seekg(frame_offset);
+            fileIn.read((char*)&frame, sizeof(md2_frame));
+            lilswap((float*)&frame, 6);
+
+            fileIn.read((char*)&tmpverts[0], sizeof(md2_vertex) * header.numvertices);
+            for (int j = 0; j < m.numverts; j++) {
                 const md2_vertex &v = tmpverts[vgen[j]];
-                *curvert++ = vec3_t(v.vertex[0]*frame.scale[0]+frame.translate[0],
-                                -(v.vertex[1]*frame.scale[1]+frame.translate[1]),
-                                    v.vertex[2]*frame.scale[2]+frame.translate[2]);
+                *curvert++ = vec3_t(
+                     ( v.vertex[0] * frame.scale[0] + frame.translate[0] ), // X
+                    -( v.vertex[1] * frame.scale[1] + frame.translate[1] ), // Y
+                     ( v.vertex[2] * frame.scale[2] + frame.translate[2] )  // Z
+                );
             }
             frame_offset += header.framesize;
+            tmpverts.clear();
         }
-        delete[] tmpverts;
-
-        delete file;
+        // delete file;
+        fileIn.close();
 
         filename = newstring(path);
         return true;
@@ -170,8 +167,7 @@ struct md2part : part
         static int range[] =  { 40, 6,  8,  4,  4,  4,  3,  3,  12, 11, 17, 11, 12, 19, 6,  9,  4,  5,  6,  6,  8,  1,  1,  1,   7 };
         static int animfr[] = { 0,  1,  2,  3,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 24 };
 
-        if((size_t)anim >= sizeof(animfr)/sizeof(animfr[0]))
-        {
+        if((size_t)anim >= sizeof(animfr)/sizeof(animfr[0])) {
             as.frame = 0;
             as.range = 1;
             return;
@@ -190,63 +186,20 @@ struct md2part : part
     }
 };
 
-md2::md2(const char *name) : model(name) 
+/*
+* ==========
+* MD2 model loader
+* ==========
+*/
+md2::md2(const char *name) 
+    : model(name, ModelTypes_t::MDL_MD2) 
 {
 
 }
 
-int md2::type() 
+md2::~md2() 
 { 
-    return MDL_MD2; 
-}
 
-void md2::render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a, float scale)
-{
-    if(!loaded) return;
-
-    if(a) for(int i = 0; a[i].tag; i++)
-    {
-        if(a[i].pos) link(NULL, a[i].tag, a[i].pos);
-    }
-
-    if(!cullface) glDisable(GL_CULL_FACE);
-    else if(anim&ANIM_MIRROR) glCullFace(GL_BACK);
-
-    if(stenciling && !parts[0]->index)
-    {
-        shadowdir = vec3_t(0, 1/SQRT2, -1/SQRT2);
-        shadowdir.rotate_around_z((-shadowyaw-yaw-180.0f)*RAD);
-        shadowdir.rotate_around_y(-pitch*RAD);
-        (shadowpos = shadowdir).mul(shadowdist);
-    }
-
-    modelpos = o;
-    modelyaw = yaw;
-    modelpitch = pitch;
-
-    matrixpos = 0;
-    matrixstack[0].identity();
-    matrixstack[0].translate(o);
-    matrixstack[0].rotate_around_z((yaw+180)*RAD);
-    matrixstack[0].rotate_around_y(-pitch*RAD);
-    if(anim&ANIM_MIRROR || scale!=1) matrixstack[0].scale(scale, anim&ANIM_MIRROR ? -scale : scale, scale);
-    parts[0]->render(anim, varseed, speed, basetime, d);
-
-    if(!cullface) glEnable(GL_CULL_FACE);
-    else if(anim&ANIM_MIRROR) glCullFace(GL_FRONT);
-
-    if(a) for(int i = 0; a[i].tag; i++)
-    {
-        if(a[i].pos) link(NULL, a[i].tag, NULL);
-
-        model *m = (model *)a[i].m;
-        if(!m) continue;
-        m->parts[0]->index = parts.length()+i;
-        m->setskin();
-        m->render(anim, varseed, speed, basetime, o, yaw, pitch, d, NULL, scale);
-    }
-
-    if(d) d->lastrendered = lastmillis;
 }
 
 void md2::rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, modelattach *a)

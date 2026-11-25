@@ -130,11 +130,6 @@ struct linkedpart
     }
 };
 
-enum { 
-    MDL_MD2 = 1, 
-    MDL_MD3 
-};
-
 struct model;
 struct modelattach
 {
