@@ -56,11 +56,11 @@ struct lightcacheentry : modelcacheentry<lightcacheentry> {
 struct mesh {
     char* name;
     part* owner;
-    vec3_t* verts;
-    tcvert* tcverts;
-    aabb_s* bbs;
-    ushort* shareverts;
-    tri* tris;
+    std::vector<Vector3>    m_verts;
+    std::vector<Vector2>    m_uvs;
+    std::vector<aabb_s>     m_aabbs;
+    std::vector<ushort>     m_shareverts;
+    std::vector<tri>        m_tris;
     int numverts, numtris;
 
     Texture* skin;

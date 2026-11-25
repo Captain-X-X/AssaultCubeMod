@@ -20,18 +20,20 @@ extern float modelyaw;
 extern float modelpitch;
 extern int animationinterpolationtime;
 
-mesh::mesh() : name(0), owner(0), verts(0), tcverts(0), bbs(0), shareverts(0), tris(0), skin(notexture), tex(0), dynidx(0), dyndraws(0), statlist(0)
+mesh::mesh() 
+    : name(0), owner(0), skin(notexture), tex(0), dynidx(0), dyndraws(0), statlist(0)
 {
+
 }
 
 mesh::~mesh()
 {
     DELETEA(name);
-    DELETEA(verts);
-    DELETEA(tcverts);
-    DELETEA(bbs);
-    DELETEA(shareverts);
-    DELETEA(tris);
+    //DELETEA(verts);
+    // DELETEA(tcverts);
+    // DELETEA(bbs);
+    // DELETEA(shareverts);
+    // DELETEA(tris);
     if(statlist) glDeleteLists(statlist, 1);
     DELETEA(dynidx);
     DELETEA(dyndraws);
@@ -40,7 +42,7 @@ mesh::~mesh()
 void mesh::genstrips()
 {
     tristrip ts;
-    ts.addtriangles(tris, numtris);
+    ts.addtriangles(m_tris.data(), numtris);
     vector<ushort> idxs;
     vector<drawcall> draws;
     ts.buildstrips(idxs, draws);
@@ -72,16 +74,16 @@ dyncacheentry* mesh::gendynverts(animstate &as, anpos &cur, anpos *prev, float a
     if(cachelen >= owner->model->cachelimit) dyncache.removelast();
     dyncache.addfirst(d);
     vec3_t *buf = d->verts(),
-        *vert1 = &verts[cur.fr1 * numverts],
-        *vert2 = &verts[cur.fr2 * numverts],
+        *vert1 = &m_verts[cur.fr1 * numverts],
+        *vert2 = &m_verts[cur.fr2 * numverts],
         *pvert1 = NULL, *pvert2 = NULL;
     d->cur = cur;
     d->t = ai_t;
     if(prev)
     {
         d->prev = *prev;
-        pvert1 = &verts[prev->fr1 * numverts];
-        pvert2 = &verts[prev->fr2 * numverts];
+        pvert1 = &m_verts[prev->fr1 * numverts];
+        pvert2 = &m_verts[prev->fr2 * numverts];
     }
     else d->prev.fr1 = -1;
 
@@ -108,14 +110,14 @@ dyncacheentry* mesh::gendynverts(animstate &as, anpos &cur, anpos *prev, float a
 void mesh::weldverts()
 {
     hashtable<vec3_t, int> idxs;
-    shareverts = new ushort[numverts];
-    loopi(numverts) shareverts[i] = (ushort)idxs.access(verts[i], i);
+    m_shareverts.resize(numverts);
+    loopi(numverts) m_shareverts[i] = (ushort)idxs.access(m_verts[i], i);
     for(int i = 1; i < owner->numframes; i++)
     {
-        const vec3_t *frame = &verts[i*numverts];
+        const vec3_t *frame = &m_verts[i*numverts];
         loopj(numverts)
         {
-            if(frame[j] != frame[shareverts[j]]) shareverts[j] = (ushort)j;
+            if(frame[j] != frame[m_shareverts[j]]) m_shareverts[j] = (ushort)j;
         }
     }
 }
@@ -125,10 +127,10 @@ void mesh::findneighbors()
     hashtable<uint, uint> edges;
     loopi(numtris)
     {
-        const tri &t = tris[i];
+        const tri& t = m_tris[i];
         loopj(3)
         {
-            uint e1 = shareverts[t.vert[j]], e2 = shareverts[t.vert[(j+1)%3]], shift = 0;
+            uint e1 = m_shareverts[t.vert[j]], e2 = m_shareverts[t.vert[(j+1)%3]], shift = 0;
             if(e1 > e2) { swap(e1, e2); shift = 16; }
             uint &edge = edges.access(e1 | (e2<<16), ~0U);
             if(((edge>>shift)&0xFFFF) != 0xFFFF) edge = 0;
@@ -141,10 +143,10 @@ void mesh::findneighbors()
     }
     loopi(numtris)
     {
-        tri &t = tris[i];
+        tri& t = m_tris[i];
         loopj(3)
         {
-            uint e1 = shareverts[t.vert[j]], e2 = shareverts[t.vert[(j+1)%3]], shift = 0;
+            uint e1 = m_shareverts[t.vert[j]], e2 = m_shareverts[t.vert[(j+1)%3]], shift = 0;
             if(e1 > e2) { swap(e1, e2); shift = 16; }
             uint edge = edges[e1 | (e2<<16)];
             if(!edge || int((edge>>shift)&0xFFFF)!=i) t.neighbor[j] = 0xFFFF;
@@ -164,24 +166,34 @@ void mesh::cleanup()
 
 shadowcacheentry* mesh::genshadowvolume(animstate &as, anpos &cur, anpos *prev, float ai_t, vec3_t *buf)
 {
-    if(!shareverts) return NULL;
+    if(m_shareverts.empty()) {
+        return NULL;
+    }
 
-    shadowcacheentry *d = shadowcache.start();
+    shadowcacheentry* d = shadowcache.start();
     int cachelen = 0;
-    for(; d != shadowcache.end(); d = d->next, cachelen++)
-    {
-        if(d->dir != shadowpos || d->cur != cur) continue;
-        if(prev)
-        {
-            if(d->prev == *prev && d->t == ai_t) return d;
+    for(; d != shadowcache.end(); d = d->next, cachelen++) {
+        if(d->dir != shadowpos || d->cur != cur) {
+            continue;
         }
-        else if(d->prev.fr1 < 0) return d;
+        if(prev) {
+            if(d->prev == *prev && d->t == ai_t) {
+                return d;
+            }
+        }
+        else if(d->prev.fr1 < 0) {
+            return d;
+        }
     }
 
     d = (owner->numframes > 1 || as.anim&ANIM_DYNALLOC ? model::dynalloc : model::statalloc).allocate<shadowcacheentry>(9*numtris*sizeof(ushort));
-    if(!d) return NULL;
+    if(!d) {
+        return NULL;
+    }
 
-    if(cachelen >= owner->model->cachelimit) shadowcache.removelast();
+    if(cachelen >= owner->model->cachelimit) {
+        shadowcache.removelast();
+    }
     shadowcache.addfirst(d);
     d->dir = shadowpos;
     d->cur = cur;
@@ -194,7 +206,7 @@ shadowcacheentry* mesh::genshadowvolume(animstate &as, anpos &cur, anpos *prev, 
 
     loopi(numtris)
     {
-        const tri &t = tris[i];
+        const tri& t = m_tris[i];
         const vec3_t &a = buf[t.vert[0]], &b = buf[t.vert[1]], &c = buf[t.vert[2]];
         side.add(vec3_t::cross((b - a), (c - a)).dot(shadowdir) <= 0 ? 1 : 0);
     }
@@ -202,13 +214,12 @@ shadowcacheentry* mesh::genshadowvolume(animstate &as, anpos &cur, anpos *prev, 
     ushort *idx = d->idxs();
     loopi(numtris) if(side[i])
     {
-        const tri &t = tris[i];
+        const tri& t = m_tris[i];
         loopj(3)
         {
             ushort n = t.neighbor[j];
-            if(n==0xFFFF || !side[n])
-            {
-                ushort e1 = shareverts[t.vert[j]], e2 = shareverts[t.vert[(j+1)%3]];
+            if(n==0xFFFF || !side[n]) {
+                ushort e1 = m_shareverts[t.vert[j]], e2 = m_shareverts[t.vert[(j+1)%3]];
                 *idx++ = e2;
                 *idx++ = e1;
                 *idx++ = numverts;
@@ -274,15 +285,14 @@ lightcacheentry* mesh::lightvertexes(animstate &as, anpos &cur, anpos *prev, flo
     return d;
 }
 
-void mesh::getcurbb(aabb_s &b, animstate &as, anpos &cur, anpos *prev, float ai_t)
+void mesh::getcurbb(aabb_s& b, animstate &as, anpos &cur, anpos *prev, float ai_t)
 {
-    b = bbs[cur.fr1];
-    b.add(bbs[cur.fr2]);
+    b = m_aabbs[cur.fr1];
+    b.add(m_aabbs[cur.fr2]);
 
-    if(prev)
-    {
-        b.add(bbs[prev->fr1]);
-        b.add(bbs[prev->fr2]);
+    if(prev) {
+        b.add(m_aabbs[prev->fr1]);
+        b.add(m_aabbs[prev->fr2]);
     }
 }
 
@@ -333,7 +343,7 @@ void mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
         if(!addshadowbox(curbb.min, curbb.max, shadowpos, mat)) return;
     }
 
-    vec3_t *buf = verts;
+    vec3_t *buf = m_verts.data();
     dyncacheentry *d = NULL;
     if(!isstat)
     {
@@ -358,11 +368,11 @@ void mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
     }
     else
     {
-        if(model::lasttexcoordarray != tcverts)
+        if(model::lasttexcoordarray != m_uvs.data())
         {
             if(!model::lasttexcoordarray) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glTexCoordPointer(2, GL_FLOAT, sizeof(tcvert), tcverts);
-            model::lasttexcoordarray = tcverts;
+            glTexCoordPointer(2, GL_FLOAT, sizeof(tcvert), m_uvs.data());
+            model::lasttexcoordarray = m_uvs.data();
         }
         if(owner->model->vertexlight)
         {
@@ -418,7 +428,7 @@ int mesh::findvert(int axis, int dir)
     float bestval = -1e16f;
     loopi(numverts)
     {
-        float val = verts[i][axis]*dir;
+        float val = m_verts[i][axis]*dir;
         if(val > bestval)
         {
             vert = i;
@@ -431,14 +441,13 @@ int mesh::findvert(int axis, int dir)
 float mesh::calcradius()
 {
     float rad = 0;
-    loopi(numverts) rad = Maths::max(rad, verts[i].magnitudexy());
+    loopi(numverts) rad = Maths::max(rad, m_verts[i].magnitudexy());
     return rad;
 }
 
 void mesh::calcneighbors()
 {
-    if(!shareverts)
-    {
+    if(m_shareverts.empty()) {
         weldverts();
         findneighbors();
     }
@@ -446,14 +455,15 @@ void mesh::calcneighbors()
 
 void mesh::calcbbs()
 {
-    if(bbs) return;
-    bbs = new aabb_s[owner->numframes];
-    loopi(owner->numframes)
-    {
-        aabb_s &b = bbs[i];
+    if(!m_aabbs.empty()) {
+        return;
+    }
+    m_aabbs.resize(owner->numframes);
+    for (int i = 0; i < owner->numframes; i++) {
+        aabb_s& b = m_aabbs[i];
         b.min = vec3_t(1e16f, 1e16f, 1e16f);
         b.max = vec3_t(-1e16f, -1e16f, -1e16f);
-        const vec3_t *frame = &verts[numverts*i];
+        const vec3_t *frame = &m_verts[numverts*i];
         loopj(numverts) b.add(frame[j]);
     }
 }

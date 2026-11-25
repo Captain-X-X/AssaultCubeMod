@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "cube.h"
 #include "tristrip.h"
 
@@ -72,23 +73,21 @@ bool triangle::haslink(ushort neighbor) const
 void tristrip::findconnectivity()
 {
     hashtable<edge, ushort> edges;
-    nodes.setsize(0);
-    loopv(triangles)
-    {
-        triangle &tri = triangles[i];
+    nodes.clear();
+    for (size_t i = 0; i < triangles.size(); i++) {
+        triangle& tri = triangles[i];
         loopj(3)
         {
             edge e = {tri.v[j == 2 ? 0 : j + 1], tri.v[j]};
             edges.access(e, i);
 
-            while (nodes.length() <= tri.v[j])
-                nodes.add(0);
+            while (nodes.size() <= tri.v[j])
+                nodes.push_back(0);
             nodes[tri.v[j]]++;
         }
     }
-    loopv(triangles)
-    {
-        triangle &tri = triangles[i];
+    for (size_t i = 0; i < triangles.size(); i++) {
+        triangle& tri = triangles[i];
         loopj(3)
         {
             edge e = {tri.v[j], tri.v[j == 2 ? 0 : j + 1]};
@@ -108,10 +107,12 @@ void tristrip::findconnectivity()
             }
         }
     }
-    loopi(4) connectivity[i].setsize(0);
-    loopv(triangles) connectivity[triangles[i].numlinks()].add(i);
+    loopi(4) connectivity[i].clear();
+    for (size_t i = 0; i < triangles.size(); i++) {
+        connectivity[triangles[i].numlinks()].push_back(i);
+    }
     if (dbgts)
-        conoutf("no connections: %d", connectivity[0].length());
+        conoutf("no connections: %d", connectivity[0].size());
 }
 
 void tristrip::removeconnectivity(ushort i)
@@ -128,10 +129,17 @@ void tristrip::removeconnectivity(ushort i)
             neighbor.n[k] = triangle::REMOVED;
             break;
         }
-        if (linked)
-        {
-            connectivity[conn].replacewithlast(tri.n[j]);
-            connectivity[conn - 1].add(tri.n[j]);
+        if (linked) {
+            // connectivity[conn].
+            if (!connectivity[conn].empty()){
+                for (size_t i = 0; i < connectivity[conn].size() - 1; i++) {
+                    if (connectivity[conn][i] == tri.n[j]) {
+                        connectivity[conn][i] = connectivity[conn].back();
+                    }
+                }
+            }
+            connectivity[conn].pop_back();
+            connectivity[conn - 1].push_back(tri.n[j]);
         }
     }
     removenodes(i);
@@ -145,11 +153,13 @@ bool tristrip::remaining() const
 
 ushort tristrip::leastconnected()
 {
-    loopi(4) if (!connectivity[i].empty())
-    {
-        ushort least = connectivity[i].pop();
-        removeconnectivity(least);
-        return least;
+    for (int i = 0; i < 4; i++) {
+        if (!connectivity[i].empty()) {
+            ushort least = connectivity[i].back();
+            connectivity[i].pop_back();
+            removeconnectivity(least);
+            return least;
+        }
     }
     return triangle::UNUSED;
 }
@@ -204,7 +214,8 @@ ushort tristrip::nexttriangle(triangle &tri, bool &nextswap, ushort v1, ushort v
     if (next != triangle::UNUSED)
     {
         tri.unlink(next, triangle::REMOVED);
-        connectivity[triangles[next].numlinks()].replacewithlast(next);
+        SVector_ReplaceWithLast(connectivity[triangles[next].numlinks()], next);
+        // connectivity[triangles[next].numlinks()].replacewithlast(next);
         removeconnectivity(next);
     }
     return next;

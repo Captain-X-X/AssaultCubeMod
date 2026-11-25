@@ -94,6 +94,21 @@ static inline void swap(T &a, T &b)
 #endif
 #endif
 
+template<typename T>
+void SVector_ReplaceWithLast(std::vector<T>& vec, const T& o)
+{
+    if (vec.empty())
+        return;
+
+    for (size_t i = 0; i < vec.size() - 1; i++)
+    {
+        if (vec[i] == o)
+            vec[i] = vec.back();
+    }
+
+    vec.pop_back();
+}
+
 #define MAXMAPNAMELEN 64
 inline bool validmapname(char *s)
 {

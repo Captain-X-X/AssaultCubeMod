@@ -115,7 +115,7 @@ struct md3part : part
             m.name = newstring(mheader.name);
 
             m.numtris = mheader.numtriangles;
-            m.tris = new tri[m.numtris];
+            m.m_tris.resize(m.numtris);
             f->seek(mesh_offset + mheader.ofs_triangles, SEEK_SET);
             loopj(mheader.numtriangles)
             {
@@ -123,16 +123,16 @@ struct md3part : part
                 memset((void*)&tri, 0, sizeof(md3triangle));
                 f->read(&tri, sizeof(md3triangle)); // read the triangles
                 lilswap((int *)&tri, 3);
-                loopk(3) m.tris[j].vert[k] = (ushort)tri.vertexindices[k];
+                loopk(3) m.m_tris[j].vert[k] = (ushort)tri.vertexindices[k];
             }
 
             m.numverts = mheader.numvertices;
-            m.tcverts = new tcvert[m.numverts];
+            m.m_uvs.resize(m.numverts);
             f->seek(mesh_offset + mheader.ofs_uv , SEEK_SET);
-            f->read(m.tcverts, 2*sizeof(float)*m.numverts); // read the UV data
-            lilswap(&m.tcverts[0].u, 2*m.numverts);
+            f->read(m.m_uvs.data(), 2*sizeof(float)*m.numverts); // read the UV data
+            lilswap(&m.m_uvs[0].x, 2*m.numverts);
 
-            m.verts = new vec3_t[numframes*m.numverts + 1];
+            m.m_verts.resize(numframes*m.numverts + 1);
             f->seek(mesh_offset + mheader.ofs_vertices, SEEK_SET);
             loopj(numframes*mheader.numvertices)
             {
@@ -141,9 +141,9 @@ struct md3part : part
                 f->read(&v, sizeof(md3vertex)); // read the vertices
                 lilswap((short *)&v, 4);
 
-                m.verts[j].x = v.vertex[1]/64.0f;
-                m.verts[j].y = v.vertex[0]/64.0f;
-                m.verts[j].z = v.vertex[2]/64.0f;
+                m.m_verts[j].x = v.vertex[1] / 64.0f;
+                m.m_verts[j].y = v.vertex[0] / 64.0f;
+                m.m_verts[j].z = v.vertex[2] / 64.0f;
             }
 
             mesh_offset += mheader.meshsize;

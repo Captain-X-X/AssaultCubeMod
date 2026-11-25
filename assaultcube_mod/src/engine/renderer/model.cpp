@@ -78,11 +78,11 @@ bool part::gentag(const char *name, int *verts, int numverts, mesh *m)
         );
 
         tag *t = &ntags[(numtags + 1) * i + numtags];
-        t->pos = m->verts[m->numverts * i + verts[0]];
+        t->pos = m->m_verts[m->numverts * i + verts[0]];
         if (numverts > 1)
         {
             for (int j = 1; j < numverts; j++)
-                t->pos.add(m->verts[m->numverts * i + verts[j]]);
+                t->pos.add(m->m_verts[m->numverts * i + verts[j]]);
             t->pos.div(numverts);
         }
         t->identity();
@@ -122,7 +122,7 @@ void part::scaleverts(const float scale, const vec3_t &translate)
         mesh &m = *meshes[i];
         loopj(numframes * m.numverts)
         {
-            vec3_t &v = m.verts[j];
+            vec3_t &v = m.m_verts[j];
             if (!index)
                 v.add(translate);
             v.mul(scale);

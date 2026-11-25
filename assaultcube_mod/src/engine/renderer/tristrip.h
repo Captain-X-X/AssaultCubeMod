@@ -36,26 +36,27 @@ struct edge {
 };
 
 struct tristrip {
-    vector<triangle> triangles;
-    vector<ushort> connectivity[4];
-    vector<uchar> nodes;
+    std::vector<triangle> triangles;
+    std::vector<ushort> connectivity[4];
+    std::vector<uchar> nodes;
 
     template <class T>
     void addtriangles(const T *tris, int numtris)
     {
-        if (dbgts)
-            printf("addtriangles: tris = %d, inds = %d", numtris, numtris * 3);
+        // if (dbgts)
+        //     printf("addtriangles: tris = %d, inds = %d", numtris, numtris * 3);
         for (int i = 0; i < numtris; i++) {
-            triangle &tri = triangles.add();
+            triangle tri;// = triangles.add();
             for (int j = 0; j < 3; j++) {
                 tri.v[j] = tris[i].vert[j];
                 tri.n[j] = triangle::UNUSED;
             }
             if (tri.v[0] == tri.v[1] || tri.v[1] == tri.v[2] || tri.v[2] == tri.v[0]) {
-                if (dbgts)
-                    printf("degenerate triangle");
-                triangles.drop();
+                // if (dbgts)
+                //     printf("degenerate triangle");
+                triangles.pop_back();
             }
+            triangles.push_back(tri);
         }
     }
 

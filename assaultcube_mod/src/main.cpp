@@ -26,68 +26,19 @@
 
 VARP(compatibilitymode, 0, 1, 1); // FIXME : find a better place to put this ?
 
+#define initlog(s) clientlogf("init: " s)
 int main(int argc, char **argv)
 {
-    sethomedir("bin_unix/data");
-
-    extern struct servercommandline scl;
-    bool dedicated = false;
-    bool quitdirectly = false;
-    char *initscript = NULL;
-    const char *initmap = rndmapname();
-
     pushscontext(IEXC_CFG);
-
-#define initlog(s) clientlogf("init: " s)
-
     initing = INIT_RESET;
-    for (int i = 1; i < argc; i++) {
-        // server: ufimNFTLAckyxpDWrXBKIoOnPMVC
-        if (!scl.checkarg(argv[i])) {
-            char *a = &argv[i][2];
-            if (argv[i][0] == '-') {
-                switch (argv[i][1]) {
-                case '-': {
-                    if (!strcmp(argv[i], "--init")) {
-                        execfile((char *)"config/init.cfg");
-                        restoredinits = true;
-                    }
-                    else if (!strncmp(argv[i], "--init=", 7)) {
-                        execfile(&argv[i][7]);
-                        restoredinits = true;
-                    }
-                    else if (!strncmp(argv[i], "--loadmap=", 10)) {
-                        initmap = &argv[i][10];
-                    }
-                    else {
-                        conoutf("\f3unknown commandline switch: %s", argv[i]);
-                    }
-                    break;
-                }
-                case 'd': dedicated = true; break;
-                case 't': fullscreen = atoi(a); break;
-                case 'w': scr_w = atoi(a); break;
-                case 'h': scr_h = atoi(a); break;
-                case 'z': depthbits = atoi(a); break;
-                case 'b': colorbits = atoi(a); break;
-                case 's': stencilbits = atoi(&argv[i][2]); break;
-                case 'a': fsaa = atoi(a); break;
-                case 'v': vsync = atoi(a); break;
-                case 'e': initscript = &argv[i][2]; break;
-                default: printf("\f3unknown commandline option: -%c\n", argv[i][1]);
-                }
-            }
-            else {
-                printf("\f3unknown commandline argument: %c\n", argv[i][0]);
-            }
-        }
-    }
-    if (quitdirectly) {
-        return EXIT_SUCCESS;
-    }
 
+    sethomedir("bin_unix/data");
+    execfile((char *)"config/init.cfg");
+    restoredinits = true;
     i18nmanager i18n("AC", path("packages/locale", true));
 
+    bool dedicated = false;
+    const char* initmap = rndmapname();
     initing = NOT_INITING;
 
     initlog("net");
@@ -260,9 +211,9 @@ int main(int argc, char **argv)
 
     localconnect();
 
-    if (initscript) {
-        execute(initscript);
-    }
+    // if (initscript) {
+    //     execute(initscript);
+    // }
 
     initlog("mainloop");
 

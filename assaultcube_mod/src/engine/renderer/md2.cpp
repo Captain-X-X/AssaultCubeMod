@@ -125,17 +125,18 @@ struct md2part : part
         delete[] glcommands;
 
         m.numverts = tcgen.length();
-        m.tcverts = new tcvert[m.numverts];
-        memcpy(m.tcverts, tcgen.getbuf(), m.numverts*sizeof(tcvert));
-        m.numtris = trigen.length();
-        m.tris = new tri[m.numtris];
-        memcpy(m.tris, trigen.getbuf(), m.numtris*sizeof(tri));
+        m.m_uvs.resize(m.numverts);
+        memcpy(m.m_uvs.data(), tcgen.getbuf(), m.numverts*sizeof(tcvert));
 
-        m.verts = new vec3_t[m.numverts*numframes+1];
+        m.numtris = trigen.length();
+        m.m_tris.resize(m.numtris);
+        memcpy(m.m_tris.data(), trigen.getbuf(), m.numtris*sizeof(tri));
+
+        m.m_verts.resize(m.numverts * numframes + 1);
 
         md2_vertex *tmpverts = new md2_vertex[header.numvertices];
         int frame_offset = header.offsetframes;
-        vec3_t *curvert = m.verts;
+        vec3_t *curvert = m.m_verts.data();
         loopi(header.numframes)
         {
             md2_frame frame;
