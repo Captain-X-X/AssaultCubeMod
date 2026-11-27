@@ -17,7 +17,7 @@ struct font
 
     char *name;
     Texture *tex;
-    vector<charinfo> chars;
+    std::vector<charinfo> chars;
     int defaultw, defaulth;
     int offsetx, offsety, offsetw, offseth;
     int skip;

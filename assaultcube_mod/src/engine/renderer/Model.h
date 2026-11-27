@@ -1,16 +1,16 @@
 #ifndef MODEL_H
 #define MODEL_H
 #include "cube.h"
-#include "modelcache.h"
+#include "Mesh3D.h"
+#include "ModelCache.h"
 #include "vert_animation.h"
-#include "vert_mesh.h"
 
 /*
 * ==========
 * pre def
 * ==========
 */
-struct model;
+class Model;
 struct modelattach;
 class dynent;
 
@@ -19,26 +19,29 @@ class dynent;
 * base model part
 * ==========
 */
-struct part
+class ModelPart
 {
-    char *filename;
-    model *model;
+public:
+    char* filename;
+    Model* model;
     int index, numframes;
-    vector<mesh *> meshes;
-    vector<animinfo> *anims;
-    linkedpart *links;
-    tag *tags;
+    std::vector<Mesh*> m_meshes;
+    std::vector<std::vector<animinfo>> m_anims;
+    std::vector<linkedpart> m_links;
+    std::vector<tag> m_tags;
     int numtags;
-    GLuint *shadows;
+    std::vector<GLuint> m_shadows;
     float shadowrad;
 
-    part();
-    virtual ~part();
+public:
+    ModelPart();
+    virtual ~ModelPart();
     void cleanup();
-    bool link(part *link, const char *tag, vec3_t *pos = NULL);
-    bool gentag(const char *name, int *verts, int numverts, mesh *m = NULL);
+
+    bool link(ModelPart* pLink, const char* tag, vec3_t* pos = NULL);
+    bool gentag(const char *name, int *verts, int numverts, Mesh* m = NULL);
     bool addemitter(const char *tag, int type, int arg1 = 0, int arg2 = 0);
-    void scaleverts(const float scale, const vec3_t &translate);
+    void scaleverts(const float scale, const vec3_t& translate);
     void genstrips();
     virtual void getdefaultanim(animstate &as, int anim, int varseed);
     void gentagmatrix(anpos &cur, anpos *prev, float ai_t, int i, GLfloat *matrix);
@@ -50,8 +53,7 @@ struct part
     void blurshadow(const uchar *in, uchar *out, uint size);
     void genshadow(int aasize, int frame, stream *f);
 
-    struct shadowheader
-    {
+    struct ShadowHeader {
         ushort size, frames;
         float height, rad;
     };
@@ -75,7 +77,7 @@ enum class ModelTypes_t : unsigned char {
     MDL_MD2,
     MDL_MD3,
 };
-class model
+class Model
 {
 private:
     ModelTypes_t m_type;
@@ -87,20 +89,20 @@ public:
     int cachelimit, batch;
     bool loaded;
     char *loadname;
-    vector<part*> parts;
+    vector<ModelPart*> parts;
     
     static bool enablealphablend, enablealphatest, enabledepthmask, enableoffset;
     static GLuint lasttex;
     static float lastalphatest;
     static void *lastvertexarray, *lasttexcoordarray, *lastcolorarray;
-    static glmatrixf matrixstack[32];
+    static Matrix4 matrixstack[32];
     static int matrixpos;
-    static modelcache dynalloc, statalloc;
+    static ModelCache dynalloc, statalloc;
 
 public:
-    model();
-    model(const char *name, ModelTypes_t mtype);
-    virtual ~model();
+    Model();
+    Model(const char *name, ModelTypes_t mtype);
+    virtual ~Model();
     
     virtual bool load() { return false; };
     virtual char *name();
@@ -117,7 +119,7 @@ public:
     virtual void startrender();
     virtual void endrender();
     
-    virtual bool link(part *link, const char *tag, vec3_t *pos = NULL);
+    virtual bool link(ModelPart* pLink, const char *tag, vec3_t *pos = NULL);
     virtual float calcradius();
     virtual void calcneighbors();
     virtual void calcbbs();
@@ -129,7 +131,7 @@ public:
 struct mapmodelinfo { 
     int rad, h, zoff; 
     string name; 
-    model *m; 
+    Model* m; 
 };
 
 class ModelManager 
@@ -143,7 +145,7 @@ public:
     void initilize();
     void shutdown();
 
-    void addModel(const model& mdl);
+    void addModel(const Model& mdl);
 };
 
 #endif

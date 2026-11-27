@@ -1,7 +1,6 @@
-#ifndef CMEMD3MDL_H
-#define CMEMD3MDL_H
-#include "cube.h"
-#include "model.h"
+#ifndef MD3MDL_H
+#define MD3MDL_H
+#include "Model.h"
 
 struct modelattach;
 class dynent;
@@ -11,17 +10,16 @@ class dynent;
 * MD3 model loader
 * ==========
 */
-class md3 : public model 
+class ModelMD3 : public Model 
 {
 public:
-    md3(const char *name);
-    ~md3();
+    ModelMD3(const char *name);
+    ~ModelMD3();
     
     void rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, modelattach *a);
     bool load();
 };
-extern md3 *loadingmd3;
-// extern string md3dir;
+extern ModelMD3* loadingmd3;
 
 void md3load(char *model);
 void md3skin(char *objname, char *skin);

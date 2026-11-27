@@ -6,13 +6,13 @@
 
 VARP(animationinterpolationtime, 0, 150, 1000);
 
-model *loadingmodel = NULL;
+Model* loadingmodel = NULL;
 
 #include "tristrip.h"
-#include "modelcache.h"
-#include "model.h"
-#include "md2.h"
-#include "md3.h"
+#include "ModelCache.h"
+#include "Model.h"
+#include "ModelMD2.h"
+#include "ModelMD3.h"
 #include "shadow.h"
 #define checkmdl if(!loadingmodel) { conoutf("not loading a model"); return; }
 
@@ -127,10 +127,10 @@ mapmodelinfo &getmminfo(int i) { return mapmodels.inrange(i) ? mapmodels[i] : *(
 COMMAND(mapmodel, "iiiss");
 COMMAND(mapmodelreset, "");
 
-hashtable<const char *, model *> mdllookup;
-model *nomodel = NULL;
+hashtable<const char *, Model* > mdllookup;
+Model* nomodel = NULL;
 
-model *loadmodel(const char *name, int i, bool trydl)
+Model* loadmodel(const char *name, int i, bool trydl)
 {
     if(!name)
     {
@@ -139,18 +139,18 @@ model *loadmodel(const char *name, int i, bool trydl)
         if(mmi.m) return mmi.m;
         name = mmi.name;
     }
-    model **mm = mdllookup.access(name);
-    model *m;
+    Model* *mm = mdllookup.access(name);
+    Model* m;
     if(mm) m = *mm;
     else
     {
         pushscontext(IEXC_MDLCFG);
-        m = new md2(name);
+        m = new ModelMD2(name);
         loadingmodel = m;
         if(!m->load())
         {
             delete m;
-            m = new md3(name);
+            m = new ModelMD3(name);
             loadingmodel = m;
             if(!m->load())
             {
@@ -174,7 +174,7 @@ model *loadmodel(const char *name, int i, bool trydl)
             if(!trydl)
             {
                 conoutf(_("failed to load model %s"), name);
-                if(!nomodel) nomodel = new md2("nomodel");
+                if(!nomodel) nomodel = new ModelMD2("nomodel");
                 m = nomodel;
                 mdllookup.access(newstring(name), m);
             }
@@ -189,7 +189,7 @@ model *loadmodel(const char *name, int i, bool trydl)
 
 void cleanupmodels()
 {
-    enumerate(mdllookup, model *, m, m->cleanup());
+    enumerate(mdllookup, Model* , m, m->cleanup());
 }
 
 VARP(dynshadow, 0, 40, 100);
@@ -207,7 +207,7 @@ struct batchedmodel
 };
 struct modelbatch
 {
-    model *m;
+    Model* m;
     vector<batchedmodel> batched;
 };
 static vector<modelbatch *> batches;
@@ -220,7 +220,7 @@ void startmodelbatches()
     modelattached.setsize(0);
 }
 
-batchedmodel &addbatchedmodel(model *m)
+batchedmodel &addbatchedmodel(Model* m)
 {
     modelbatch *b = NULL;
     if(m->batch>=0 && m->batch<numbatches && batches[m->batch]->m==m) b = batches[m->batch];
@@ -238,7 +238,7 @@ batchedmodel &addbatchedmodel(model *m)
     return b->batched.add();
 }
 
-void renderbatchedmodel(model *m, batchedmodel &b)
+void renderbatchedmodel(Model* m, batchedmodel &b)
 {
     modelattach *a = NULL;
     if(b.attached>=0) a = &modelattached[b.attached];
@@ -283,7 +283,7 @@ void renderbatchedmodel(model *m, batchedmodel &b)
     }
 }
 
-void renderbatchedmodelshadow(model *m, batchedmodel &b)
+void renderbatchedmodelshadow(Model* m, batchedmodel &b)
 {
     int x = (int)b.o.x, y = (int)b.o.y;
     if(OUTBORD(x, y)) return;
@@ -315,7 +315,7 @@ static int sortbatchedmodels(const batchedmodel *x, const batchedmodel *y)
 
 struct translucentmodel
 {
-    model *m;
+    Model* m;
     batchedmodel *batched;
     float dist;
 };
@@ -368,7 +368,7 @@ void endmodelbatches(bool flush)
     if(translucent.length())
     {
         translucent.sort(sorttranslucentmodels);
-        model *lastmodel = NULL;
+        Model* lastmodel = NULL;
         loopv(translucent)
         {
             translucentmodel &tm = translucent[i];
@@ -388,14 +388,14 @@ const int dbgmbatch = 0;
 //VAR(dbgmbatch, 0, 0, 1);
 
 VARP(popdeadplayers, 0, 0, 1);
-void rendermodel(const char *mdl, int anim, int tex, float rad, const vec &o, float yaw, float pitch, float speed, int basetime, playerent *d, modelattach *a, float scale)
+void rendermodel(const char *mdl, int anim, int tex, float rad, const Vector3& o, float yaw, float pitch, float speed, int basetime, playerent *d, modelattach *a, float scale)
 {
     if(popdeadplayers && d && a)
     {
         int acv = anim&ANIM_INDEX;
         if( acv == ANIM_DECAY || acv == ANIM_LYING_DEAD || acv == ANIM_CROUCH_DEATH || acv == ANIM_DEATH ) return;
     }
-    model *m = loadmodel(mdl);
+    Model* m = loadmodel(mdl);
     if(!m || (stenciling && (m->shadowdist <= 0 || anim&ANIM_TRANSLUCENT))) return;
 
     if(rad >= 0)
@@ -421,7 +421,7 @@ void rendermodel(const char *mdl, int anim, int tex, float rad, const vec &o, fl
 
     if(a) for(int i = 0; a[i].tag; i++)
     {
-        if(a[i].name) a[i].m = loadmodel(a[i].name);
+        if(a[i].name) a[i].pModel = loadmodel(a[i].name);
         //if(a[i].m && a[i].m->type()!=m->type()) a[i].m = NULL;
     }
 
@@ -564,14 +564,14 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin) // model skin
 
 void preload_playermodels()
 {
-    model *playermdl = loadmodel("playermodels");
+    Model* playermdl = loadmodel("playermodels");
     if(dynshadow && playermdl) playermdl->genshadows(8.0f, 4.0f);
     loopi(NUMGUNS)
     {
         if (i==GUN_CPISTOL) continue; //RR 18/12/12 - Remove when cpistol is added.
         defformatstring(widn)("modmdlvwep%d", i);
         defformatstring(vwep)("weapons/%s/world", identexists(widn)?getalias(widn):guns[i].modelname);
-        model *vwepmdl = loadmodel(vwep);
+        Model* vwepmdl = loadmodel(vwep);
         if(dynshadow && vwepmdl) vwepmdl->genshadows(8.0f, 4.0f);
     }
 }
@@ -592,14 +592,14 @@ void preload_entmodels()
          else
          strcat(buf, entmdlnames[i]);
 
-         model *mdl = loadmodel(buf);
+         Model* mdl = loadmodel(buf);
 
          if(dynshadow && mdl) mdl->genshadows(8.0f, 2.0f);
      }
      static const char *bouncemdlnames[] = { "misc/gib01", "misc/gib02", "misc/gib03", "weapons/grenade/static" };
      loopi(sizeof(bouncemdlnames)/sizeof(bouncemdlnames[0]))
      {
-         model *mdl = NULL;
+         Model* mdl = NULL;
          defformatstring(widn)("modmdlbounce%d", i);
 
          if (identexists(widn))

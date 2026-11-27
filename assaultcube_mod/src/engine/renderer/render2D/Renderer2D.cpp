@@ -28,7 +28,6 @@ void Renderer2D::uploadVertexData(VertexData2D* map, RenderCommand2D& cmd)
     if (map == nullptr) {
         return;
     }
-
     if (m_vertCount == RENDERER2D_VBUFFER_SIZE) {
         printf("Renderer2D: max vertex count hit! [max=%ld]\n", RENDERER2D_VBUFFER_SIZE);
         return;
@@ -37,30 +36,28 @@ void Renderer2D::uploadVertexData(VertexData2D* map, RenderCommand2D& cmd)
     Mesh2D* pMesh = cmd.pMesh;
     VertexData2D* pMeshVertexData = pMesh->getVertices().data();
     for (size_t i = 0; i < pMesh->getVertices().size(); i++) {
-        map->position.x = ( pMeshVertexData[i].position.x + cmd.transform.origin.x );
-        map->position.y = ( pMeshVertexData[i].position.y + cmd.transform.origin.y );
-        map->position.z = ( pMeshVertexData[i].position.z + cmd.transform.origin.z );
+        map[i].position.x = ( pMeshVertexData[i].position.x + cmd.transform.origin.x );
+        map[i].position.y = ( pMeshVertexData[i].position.y + cmd.transform.origin.y );
+        map[i].position.z = ( pMeshVertexData[i].position.z + cmd.transform.origin.z );
 
-        map->uv.x = pMeshVertexData[i].uv.x;
-        map->uv.y = pMeshVertexData[i].uv.y;
+        map[i].uv.x = pMeshVertexData[i].uv.x;
+        map[i].uv.y = pMeshVertexData[i].uv.y;
 
         if (cmd.bUseMaterialColour) {
             if (cmd.pMaterial) {
-                map->colour.x = cmd.pMaterial->colour.x;
-                map->colour.y = cmd.pMaterial->colour.y;
-                map->colour.z = cmd.pMaterial->colour.z;
-                map->colour.w = cmd.pMaterial->colour.w;
+                map[i].colour.x = cmd.pMaterial->colour.x;
+                map[i].colour.y = cmd.pMaterial->colour.y;
+                map[i].colour.z = cmd.pMaterial->colour.z;
+                map[i].colour.w = cmd.pMaterial->colour.w;
             }
         }
         else {
-            map->colour.x = pMeshVertexData[i].colour.x;
-            map->colour.y = pMeshVertexData[i].colour.y;
-            map->colour.z = pMeshVertexData[i].colour.z;
-            map->colour.w = pMeshVertexData[i].colour.w;
+            map[i].colour.x = pMeshVertexData[i].colour.x;
+            map[i].colour.y = pMeshVertexData[i].colour.y;
+            map[i].colour.z = pMeshVertexData[i].colour.z;
+            map[i].colour.w = pMeshVertexData[i].colour.w;
         }
-        map++;
     }
-    map += pMesh->getVertices().size();
     m_vertCount += pMesh->getVertices().size();
 }
 
@@ -75,10 +72,10 @@ void Renderer2D::uploadIndexData(unsigned int* map, RenderCommand2D& cmd, unsign
     }
 
     Mesh2D* pMesh = cmd.pMesh;
-    unsigned int meshISize = pMesh->getIndices().size();
-    for (size_t i = 0; i < meshISize; i++) {
+    for (size_t i = 0; i < pMesh->getIndices().size(); i++) {
         unsigned int v = pMesh->getIndices()[i] + vertexBaseOffset;
         map[i] = v;
+        // printf("  index = %d\n", map[i]);
     }
     m_indxCount += pMesh->getIndices().size();
 }
@@ -169,6 +166,18 @@ void Renderer2D::submitSpriteStatic(Sprite& sprite, const Transform& transform)
     }
 }
 
+void Renderer2D::SubmitRectCMD(float x, float y, float w, float h, const Vector4& tint, Material* pmat)
+{
+    RenderCommand2D rCmd;
+
+    // Mesh
+}
+
+void Renderer2D::SubmitRectRotatedCMD(float x, float y, float w, float h, float rot, const Vector4& tint, Material* pmat)
+{
+
+}
+
 void Renderer2D::end()
 {
     if (m_collectDrawCommands == false) {
@@ -218,7 +227,7 @@ void Renderer2D::end()
     unsigned int* pIndexBufferData = (unsigned int*)m_pindexBuffer->mapBuffer();
 
     unsigned int baseVertexOffset = 0;
-    unsigned int baseIndexOffset = 0;
+    // printf("start:\n");
     for (size_t i = 0; i < m_cmds.size(); i++) {
         RenderCommand2D& cmd = m_cmds[i];
 
@@ -229,16 +238,16 @@ void Renderer2D::end()
         case RenderCommand2DTypes_t::DRAW_ARRAYS: { break; }
         case RenderCommand2DTypes_t::DRAW_INDEXED: {
             uploadIndexData(pIndexBufferData, cmd, baseVertexOffset);
-            baseIndexOffset += cmd.pMesh->getIndices().size();
-            pIndexBufferData += baseIndexOffset;
+            pIndexBufferData += cmd.pMesh->getIndices().size();
+            baseVertexOffset += cmd.pMesh->getVertices().size();
             break;
         }
         default: { break; }
         }
         
-        baseVertexOffset += cmd.pMesh->getVertices().size();
     }
-
+    // printf("end\n");
+    // printf("vertex count = %d, index count = %d\n", m_vertCount, m_indxCount);
     m_pVertexBuffer->unmapBuffer();
     m_pindexBuffer->unmapBuffer();
 }

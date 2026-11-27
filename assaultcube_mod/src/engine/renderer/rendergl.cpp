@@ -132,7 +132,7 @@ void enablepolygonoffset(GLenum type)
         return;
     }
 
-    mat4_t offsetmatrix = reflecting ? clipmatrix : projmatrix;
+    Matrix4 offsetmatrix = reflecting ? clipmatrix : projmatrix;
     offsetmatrix[14] += depthoffset * projmatrix[10];
 
     glMatrixMode(GL_PROJECTION);
@@ -548,7 +548,7 @@ void transplayer()
     glTranslatef(-camera1->o.x, -camera1->o.y, -camera1->o.z);
 }
 
-mat4_t clipmatrix;
+Matrix4 clipmatrix;
 
 void genclipmatrix(float a, float b, float c, float d)
 {
@@ -919,7 +919,7 @@ bool outsidemap(physent *pl)
 }
 
 float cursordepth = 0.9f;
-mat4_t mvmatrix, projmatrix, mvpmatrix, invmvmatrix, invmvpmatrix;
+Matrix4 mvmatrix, projmatrix, mvpmatrix, invmvmatrix, invmvpmatrix;
 vec3_t worldpos, camdir, camup, camright;
 
 void readmatrices()

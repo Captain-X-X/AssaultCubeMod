@@ -347,7 +347,7 @@ VARP(damageindicatortime, 1, 1000, 10000);
 VARP(damageindicatoralpha, 1, 50, 100);
 int damagedirections[4] = {0};
 
-void updatedmgindicator(vec &attack)
+void updatedmgindicator(Vector3& attack)
 {
     if(hidedamageindicator || !damageindicatorsize) return;
     float bestdist = 0.0f;
@@ -509,7 +509,7 @@ void hudeditf(int type, const char *s, ...)
     hudmsgs.editline(type, sf);
 }
 
-bool insideradar(const vec &centerpos, float radius, const vec &o)
+bool insideradar(const Vector3& centerpos, float radius, const Vector3& o)
 {
     if(showmap) return !o.reject(centerpos, radius);
     return o.distxy(centerpos)<=radius;

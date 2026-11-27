@@ -1,6 +1,7 @@
 #ifndef RVERTEXDATA_H
 #define RVERTEXDATA_H
 #include "pch.h"
+#include "maths/vector_maths.h"
 
 struct VertexData2D
 {
@@ -15,7 +16,16 @@ struct VertexData3D
     Vector3 normal;
     Vector4 colour;
     Vector2 uv;
-    // unsigned int texture;
+};
+
+/*
+* ==========
+* 
+* ==========
+*/
+struct LightVertex 
+{ 
+    unsigned char r, g, b, a; 
 };
 
 #endif

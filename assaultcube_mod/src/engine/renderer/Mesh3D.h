@@ -1,8 +1,9 @@
 #ifndef CUBEVERTVESH_H
 #define CUBEVERTVESH_H
 #include "cube.h"
+#include "types/VertexData.h"
 #include "vert_animation.h"
-#include "modelcache.h"
+#include "ModelCache.h"
 #include "tristrip.h"
 
 #include "maths/aabb.h"
@@ -10,52 +11,62 @@
 #include "maths/matrix_maths.h"
 #include "texture.h"
 
-struct tcvert { 
-    float u, v; 
-};
+/*
+* ==========
+* predef
+* ==========
+*/
+class ModelPart;
 
-struct lightvert { 
-    uchar r, g, b, a; 
-};
-
-struct tri { 
-    ushort vert[3]; 
-    ushort neighbor[3]; 
-};
-
-struct part;
-
-struct dyncacheentry : modelcacheentry<dyncacheentry> {
+/*
+* ==========
+* 
+* ==========
+*/
+struct dyncacheentry : ModelCacheEntry<dyncacheentry> {
     anpos cur, prev;
     float t;
 
-    vec3_t *verts() { return (vec3_t *)getdata(); }
-    int numverts() { return int((size - sizeof(dyncacheentry)) / sizeof(vec3_t)); }
+    Vector3* verts() { return (Vector3*)getdata(); }
+    int numverts() { return int((size - sizeof(dyncacheentry)) / sizeof(Vector3)); }
 };
 
-struct shadowcacheentry : modelcacheentry<shadowcacheentry> {
+struct shadowcacheentry : ModelCacheEntry<shadowcacheentry> {
     anpos cur, prev;
     float t;
-    vec3_t dir;
+    Vector3 dir;
 
     ushort *idxs() { return (ushort *)getdata(); }
     int numidxs() { return int((size - sizeof(shadowcacheentry)) / sizeof(ushort)); }
 };
 
-struct lightcacheentry : modelcacheentry<lightcacheentry> {
+struct lightcacheentry : ModelCacheEntry<lightcacheentry> 
+{
     anpos cur, prev;
     float t;
     int lastcalclight;
-    vec3_t pos;
+    Vector3 pos;
     float yaw, pitch;
 
-    lightvert *verts() { return (lightvert *)getdata(); }
-    int numverts() { return int((size - sizeof(lightcacheentry)) / sizeof(lightvert)); }
+    LightVertex* verts() { return (LightVertex*)getdata(); }
+    int numverts() { return int((size - sizeof(lightcacheentry)) / sizeof(LightVertex)); }
 };
 
-struct mesh {
+/*
+* ==========
+* 
+* ==========
+*/
+struct tri { 
+    ushort vert[3]; 
+    ushort neighbor[3]; 
+};
+
+class Mesh 
+{
+public:
     char* name;
-    part* owner;
+    ModelPart* owner;
     std::vector<Vector3>    m_verts;
     std::vector<Vector2>    m_uvs;
     std::vector<aabb_s>     m_aabbs;
@@ -69,15 +80,16 @@ struct mesh {
     Texture* skin;
     int tex;
 
-    modelcachelist<dyncacheentry> dyncache;
-    modelcachelist<shadowcacheentry> shadowcache;
-    modelcachelist<lightcacheentry> lightcache;
+    ModelCacheList<dyncacheentry> dyncache;
+    ModelCacheList<shadowcacheentry> shadowcache;
+    ModelCacheList<lightcacheentry> lightcache;
 
     GLuint statlist;
     int statlen;
 
-    mesh();
-    ~mesh();
+public:
+    Mesh();
+    ~Mesh();
 
     void genstrips();
     dyncacheentry *gendynverts(animstate &as, anpos &cur, anpos *prev, float ai_t);

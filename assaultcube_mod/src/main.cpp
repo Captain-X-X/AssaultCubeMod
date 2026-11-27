@@ -1,7 +1,18 @@
 // main.cpp: initialisation & main loop
 #include "cube.h"
+
+// client
 #include "engine/client/client.h"
 #include "engine/client/clientgame.h"
+#include "engine/client/Window.h"
+
+// renderer
+#include "engine/renderer/api/gl/VertexBuffer.h"
+#include "engine/renderer/api/gl/VertexArray.h"
+#include "engine/renderer/api/gl/IndexBuffer.h"
+#include "engine/renderer/api/gl/Shader.h"
+#include "engine/renderer/render2D/Renderer2D.h"
+
 #include "engine/renderer/shadow.h"
 #include "engine/renderer/render_text.h"
 #include "engine/renderer/render_model.h"
@@ -10,19 +21,13 @@
 #include "engine/renderer/rendergl.h"
 #include "engine/renderer/texture.h"
 #include "engine/renderer/world_ocull.h"
+
+//
 #include "engine/physics.h"
 #include "engine/editing.h"
 #include "engine/docs.h"
 #include "engine/menus.h"
 #include "engine/scoreboard.h"
-
-#include "engine/client/Window.h"
-
-#include "engine/renderer/api/gl/VertexBuffer.h"
-#include "engine/renderer/api/gl/VertexArray.h"
-#include "engine/renderer/api/gl/IndexBuffer.h"
-#include "engine/renderer/api/gl/Shader.h"
-#include "engine/renderer/render2D/Renderer2D.h"
 
 VARP(compatibilitymode, 0, 1, 1); // FIXME : find a better place to put this ?
 
@@ -224,11 +229,14 @@ int main(int argc, char **argv)
     Sprite testSprite1;
     Material* pSpriteMaterial1 = g_MaterialMgr.getMaterial("white");
     Material mat0 = *pSpriteMaterial1;
-    testSprite1.create(10.0f, 10.0f, 100.0f, 100.0f, Vector4(0.0f, 1.0f, 1.0f, 1.0f), pSpriteMaterial1);
+    testSprite1.create(10.0f, 10.0f, 100.0f, 100.0f, Vector4(1.0f, 0.0f, 0.0f, 1.0f), pSpriteMaterial1);
     // testSprite1.create(10.0f, 10.0f, 100.0f, 100.0f, Vector4(1.0f, 1.0f, 0.0f, 1.0f));
 
     Sprite testSprite2;
-    testSprite2.create(110.0f, 10.0f, 100.0f, 100.0f, Vector4(1.0f, 1.0f, 0.0f, 1.0f), pSpriteMaterial1);
+    testSprite2.create(20.0f, 20.0f, 80.0f, 80.0f, Vector4(0.0f, 1.0f, 0.0f, 1.0f), pSpriteMaterial1);
+
+    Sprite testSprite3;
+    testSprite3.create(30.0f, 30.0f, 60.0f, 60.0f, Vector4(0.0f, 0.0f, 1.0f, 1.0f), pSpriteMaterial1);
 
     while (g_client.window.shouldClose()) {
         g_client.window.update();
@@ -291,6 +299,7 @@ int main(int argc, char **argv)
         render2d.begin();
         render2d.submitSprite(testSprite1, Transform());
         render2d.submitSprite(testSprite2, Transform());
+        render2d.submitSprite(testSprite3, Transform());
         render2d.end();
         render2d.flush();
         

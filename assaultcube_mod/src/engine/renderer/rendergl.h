@@ -5,16 +5,24 @@
 struct color
 {
     float r, g, b, alpha;
-    color(){}
-    color(float r, float g, float b) : r(r), g(g), b(b), alpha(1.0f) {}
-    color(float r, float g, float b, float a) : r(r), g(g), b(b), alpha(a) {}
+    
+    color()
+    {
+
+    }
+    
+    color(float r, float g, float b, float a = 1.0f) 
+        : r(r), g(g), b(b), alpha(a) 
+    {
+
+    }
 };
 
 extern bool hasTE, hasMT, hasMDA, hasDRE, hasstencil, hasST2, hasSTW, hasSTS, hasAF;
 extern float cursordepth;
-extern mat4_t mvmatrix, projmatrix, mvpmatrix, invmvmatrix, invmvpmatrix;
-extern vec3_t worldpos, camdir, camup, camright;
-extern mat4_t clipmatrix;
+extern Matrix4 mvmatrix, projmatrix, mvpmatrix, invmvmatrix, invmvpmatrix;
+extern Vector3 worldpos, camdir, camup, camright;
+extern Matrix4 clipmatrix;
 
 void resetcamera();
 
@@ -30,7 +38,7 @@ void dot(int x, int y, float z);
 void linestyle(float width, int r, int g, int b);
 void blendbox(int x1, int y1, int x2, int y2, bool border, int tex = -1, color *c = NULL);
 void quad(GLuint tex, float x, float y, float s, float tx, float ty, float tsx, float tsy = 0);
-void quad(GLuint tex, vec &c1, vec &c2, float tx, float ty, float tsx, float tsy);
+void quad(GLuint tex, Vector3& c1, Vector3& c2, float tx, float ty, float tsx, float tsy);
 void circle(GLuint tex, float x, float y, float r, float tx, float ty, float tr, int subdiv = 32);
 void setperspective(float fovy, float aspect, float nearplane, float farplane);
 void sethudgunperspective(bool on);

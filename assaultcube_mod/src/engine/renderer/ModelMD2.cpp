@@ -1,5 +1,5 @@
-#include "cube.h"
-#include "md2.h"
+#include "pch.h"
+#include "ModelMD2.h"
 #include "texture.h"
 #include "render_model.h"
 
@@ -18,7 +18,7 @@ extern float modelyaw;
 extern float modelpitch;
 extern int animationinterpolationtime;
 
-md2 *loadingmd2 = 0;
+ModelMD2* loadingmd2 = 0;
 
 struct md2_header
 {
@@ -44,8 +44,9 @@ struct md2_frame
     char       name[16];
 };
 
-struct md2part : part
+class MD2Part : public ModelPart
 {
+public:
     void gentcverts(std::vector<int>& glcommands, std::vector<Vector2>& tcverts, std::vector<ushort> &vindexes, std::vector<tri>& tris)
     {
         hashtable<ivec, int> tchash;
@@ -108,8 +109,8 @@ struct md2part : part
 
         numframes = header.numframes;
 
-        mesh& m = *new mesh;
-        meshes.add(&m);
+        m_meshes.push_back(new Mesh);
+        Mesh& m = *m_meshes.back();
         m.owner = this;
 
         std::vector<int> glCommands;
@@ -118,7 +119,7 @@ struct md2part : part
         fileIn.read((char*)glCommands.data(), sizeof(int) * header.numglcommands);
         lilswap(glCommands.data(), glCommands.size());
 
-        if(glCommands.size() < header.numglcommands) {
+        if(glCommands.size() < static_cast<size_t>(header.numglcommands)) {
             memset(&glCommands[glCommands.size()], 0, (header.numglcommands-glCommands.size())*sizeof(int));
         }
 
@@ -180,9 +181,9 @@ struct md2part : part
 
     void begingenshadow()
     {
-        model::matrixpos = 0;
-        model::matrixstack[0].identity();
-        model::matrixstack[0].rotate_around_z(180*RAD);
+        Model::matrixpos = 0;
+        Model::matrixstack[0].identity();
+        Model::matrixstack[0].rotate_around_z(180*RAD);
     }
 };
 
@@ -191,33 +192,33 @@ struct md2part : part
 * MD2 model loader
 * ==========
 */
-md2::md2(const char *name) 
-    : model(name, ModelTypes_t::MDL_MD2) 
+ModelMD2::ModelMD2(const char *name) 
+    : Model(name, ModelTypes_t::MDL_MD2) 
 {
 
 }
 
-md2::~md2() 
+ModelMD2::~ModelMD2() 
 { 
 
 }
 
-void md2::rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, modelattach *a)
+void ModelMD2::rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, modelattach *a)
 {
     parts[0]->rendershadow(anim, varseed, speed, basetime, o, yaw);
     if(a) for(int i = 0; a[i].tag; i++)
     {
-        model *m = (model *)a[i].m;
+        Model* m = (Model*)a[i].pModel;
         if(!m) continue;
-        part *p = m->parts[0];
+        ModelPart* p = m->parts[0];
         p->rendershadow(anim, varseed, speed, basetime, o, yaw);
     }
 }
 
-bool md2::load()
+bool ModelMD2::load()
 {
     if(loaded) return true;
-    md2part &mdl = *new md2part;
+    MD2Part& mdl = *new MD2Part();
     parts.add(&mdl);
     mdl.model = this;
     mdl.index = 0;
@@ -230,7 +231,9 @@ bool md2::load()
     }
     Texture *skin;
     loadskin(loadname, pname, skin);
-    loopv(mdl.meshes) mdl.meshes[i]->skin  = skin;
+    for (size_t i = 0; i < mdl.m_meshes.size(); i++) { 
+        mdl.m_meshes[i]->skin  = skin;
+    }
     if(skin==notexture) conoutf(_("could not load model skin for %s"), name1);
     loadingmd2 = this;
     defformatstring(name2)("packages/models/%s/md2.cfg", loadname);
@@ -262,7 +265,7 @@ void md2anim(char *anim, int *frame, int *range, float *speed)
 void md2tag(char *name, char *vert1, char *vert2, char *vert3, char *vert4)
 {
     if(!loadingmd2 || loadingmd2->parts.empty()) { conoutf("not loading an md2"); return; }
-    part &mdl = *loadingmd2->parts.last();
+    ModelPart& mdl = *loadingmd2->parts.last();
     int indexes[4] = { -1, -1, -1, -1 }, numverts = 0;
     loopi(4)
     {
@@ -290,7 +293,7 @@ void md2tag(char *name, char *vert1, char *vert2, char *vert3, char *vert4)
                 case 'z':
                 case 'Z': axis = 2; break;
             }
-            if(!mdl.meshes.empty()) indexes[i] = mdl.meshes[0]->findvert(axis, dir);
+            if(!mdl.m_meshes.empty()) indexes[i] = mdl.m_meshes[0]->findvert(axis, dir);
         }
         if(indexes[i] < 0) { conoutf("could not find vertex %s", vert); return; }
         numverts = i + 1;
@@ -301,7 +304,7 @@ void md2tag(char *name, char *vert1, char *vert2, char *vert3, char *vert4)
 void md2emit(char *tag, int *type, int *arg1, int *arg2)
 {
     if(!loadingmd2 || loadingmd2->parts.empty()) { conoutf("not loading an md2"); return; };
-    part &mdl = *loadingmd2->parts.last();
+    ModelPart& mdl = *loadingmd2->parts.last();
     if(!mdl.addemitter(tag, *type, *arg1, *arg2)) { conoutf("could not find tag %s", tag); return; }
 }
 

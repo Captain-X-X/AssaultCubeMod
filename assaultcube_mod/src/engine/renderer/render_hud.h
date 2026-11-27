@@ -16,7 +16,7 @@ void hudoutf(const char *s, ...);
 void hudonlyf(const char *s, ...);
 void hudeditf(int type, const char *s, ...);
 void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2 = 0, const char *text2 = NULL);
-void updatedmgindicator(vec &attack);
+void updatedmgindicator(Vector3& attack);
 vec getradarpos();
 
 #endif

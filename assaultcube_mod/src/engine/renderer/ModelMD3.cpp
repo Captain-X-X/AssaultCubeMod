@@ -1,6 +1,6 @@
-#include "md3.h"
+#include "pch.h"
+#include "ModelMD3.h"
 #include "cube.h"
-#include "model.h"
 #include "texture.h"
 #include "render_model.h"
 
@@ -20,11 +20,11 @@ extern float modelpitch;
 extern int animationinterpolationtime;
 
 string md3dir;
-md3 *loadingmd3 = NULL;
+ModelMD3* loadingmd3 = NULL;
 
-struct md3tag {
+struct MD3Tag_s {
     char name[64];
-    vec3_t pos;
+    Vector3 pos;
     float rotation[3][3];
 };
 
@@ -37,7 +37,7 @@ struct md3triangle {
     int vertexindices[3];
 };
 
-struct md3header {
+struct MD3Header_s {
     char id[4];
     int version;
     char name[64];
@@ -54,49 +54,58 @@ struct md3meshheader {
     int ofs_triangles, ofs_shaders, ofs_uv, ofs_vertices, meshsize; // offsets
 };
 
-struct md3part : part
+class MD3Part : public ModelPart
 {
+public:
+    bool loadHeader(std::ifstream& file, MD3Header_s& header)
+    {
+        file.read((char*)&header, sizeof(MD3Header_s));
+        lilswap(&header.version, 1);
+        lilswap(&header.flags, 9);
+        if(strncmp(header.id, "IDP3", 4) != 0 || header.version != 15) { // header check 
+            return false;
+        }
+        return true;
+    }
+
     bool load(char *path)
     {
         if(filename) {
             return true;
         }
 
+        MD3Header_s header;
+
         std::ifstream fileIn(path, std::ios::in);
         if (!fileIn.is_open()) {
             return false;
         }
 
-        md3header header;
-        fileIn.read((char*)&header, sizeof(md3header));
-        lilswap(&header.version, 1);
-        lilswap(&header.flags, 9);
-        if(strncmp(header.id, "IDP3", 4) != 0 || header.version != 15) { // header check 
-            fileIn.close();
+        if (!loadHeader(fileIn, header)) {
             return false;
         }
 
         numframes = header.numframes;
         numtags = header.numtags;
         if(numtags) {
-            tags = new tag[numframes*numtags];
+            m_tags.resize(numframes*numtags);
             fileIn.seekg(header.ofs_tags);
-            md3tag tag;
+            MD3Tag_s tag;
 
             for (int i = 0; i < (header.numframes * header.numtags); i++) {
-                fileIn.read((char*)&tag, sizeof(md3tag));
+                fileIn.read((char*)&tag, sizeof(MD3Tag_s));
                 lilswap((float *)&tag.pos, 12);
                 if(tag.name[0] && i<header.numtags) {
-                    tags[i].name = newstring(tag.name);
+                    m_tags[i].name = newstring(tag.name);
                 }
-                tags[i].pos = vec3_t(tag.pos.y, tag.pos.x, tag.pos.z);
-                memcpy(tags[i].transform, tag.rotation, sizeof(tag.rotation));
+                m_tags[i].pos = vec3_t(tag.pos.y, tag.pos.x, tag.pos.z);
+                memcpy(m_tags[i].transform, tag.rotation, sizeof(tag.rotation));
                 // undo the x/y swap
-                for (int j = 0; j < 3; j++) swap(tags[i].transform[0][j], tags[i].transform[1][j]);
+                for (int j = 0; j < 3; j++) swap(m_tags[i].transform[0][j], m_tags[i].transform[1][j]);
                 // then restore it
-                for (int j = 0; j < 3; j++) swap(tags[i].transform[j][0], tags[i].transform[j][1]);
+                for (int j = 0; j < 3; j++) swap(m_tags[i].transform[j][0], m_tags[i].transform[j][1]);
             }
-            links = new linkedpart[numtags];
+            m_links.resize(numtags);
         }
 
         int mesh_offset = header.ofs_meshes;
@@ -111,7 +120,8 @@ struct md3part : part
                 continue;
             }
 
-            mesh &m = *meshes.add(new mesh);
+            m_meshes.push_back(new Mesh);
+            Mesh& m = *m_meshes.back();
             m.owner = this;
             m.name = newstring(mheader.name);
 
@@ -155,9 +165,9 @@ struct md3part : part
 
     void begingenshadow()
     {
-        model::matrixpos = 0;
-        model::matrixstack[0].identity();
-        model::matrixstack[0].rotate_around_z(180*RAD);
+        Model::matrixpos = 0;
+        Model::matrixstack[0].identity();
+        Model::matrixstack[0].rotate_around_z(180*RAD);
     }
 };
 
@@ -166,24 +176,24 @@ struct md3part : part
 * MD3 model loader
 * ==========
 */
-md3::md3(const char *name) 
-    : model(name, ModelTypes_t::MDL_MD3) 
+ModelMD3::ModelMD3(const char *name) 
+    : Model(name, ModelTypes_t::MDL_MD3) 
 {
 
 }
 
-md3::~md3() 
+ModelMD3::~ModelMD3() 
 { 
 
 }
 
-void md3::rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, modelattach *a)
+void ModelMD3::rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, modelattach *a)
 {
     if(parts.length()>1) return;
     parts[0]->rendershadow(anim, varseed, speed, basetime, o, yaw);
 }
 
-bool md3::load()
+bool ModelMD3::load()
 {
     if(loaded) return true;
     formatstring(md3dir)("packages/models/%s", loadname);
@@ -206,7 +216,7 @@ bool md3::load()
     {
         per_idents = false;
         loadingmd3 = NULL;
-        md3part &mdl = *new md3part;
+        MD3Part& mdl = *new MD3Part();
         parts.add(&mdl);
         mdl.model = this;
         mdl.index = 0;
@@ -218,7 +228,9 @@ bool md3::load()
         };
         Texture *skin;
         loadskin(loadname, pname, skin);
-        loopv(mdl.meshes) mdl.meshes[i]->skin  = skin;
+        for (size_t i = 0; i < mdl.m_meshes.size(); i++) {
+            mdl.m_meshes[i]->skin  = skin;
+        }
         if(skin==notexture) conoutf("could not load model skin for %s", name1);
     }
     loopv(parts) parts[i]->scaleverts(scale/16.0f, vec3_t(translate.x, -translate.y, translate.z));
@@ -232,7 +244,7 @@ void md3load(char *model)
 {
     if(!loadingmd3) { conoutf("not loading an md3"); return; };
     defformatstring(filename)("%s/%s", md3dir, model);
-    md3part &mdl = *new md3part;
+    MD3Part& mdl = *new MD3Part();
     loadingmd3->parts.add(&mdl);
     mdl.model = loadingmd3;
     mdl.index = loadingmd3->parts.length()-1;
@@ -243,12 +255,10 @@ void md3skin(char *objname, char *skin)
 {
     if(!objname || !skin) return;
     if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; };
-    part &mdl = *loadingmd3->parts.last();
-    loopv(mdl.meshes)
-    {
-        mesh &m = *mdl.meshes[i];
-        if(!strcmp(objname, "*") || !strcmp(m.name, objname))
-        {
+    ModelPart& mdl = *loadingmd3->parts.last();
+    for (size_t i = 0; i < mdl.m_meshes.size(); i++) { 
+        Mesh& m = *mdl.m_meshes[i];
+        if(!strcmp(objname, "*") || !strcmp(m.name, objname)) {
             defformatstring(spath)("%s/%s", md3dir, skin);
             m.skin = g_TextureMgr.load(spath);
         }
@@ -273,7 +283,7 @@ void md3link(int *parent, int *child, char *tagname)
 void md3emit(char *tag, int *type, int *arg1, int *arg2)
 {
     if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; };
-    part &mdl = *loadingmd3->parts.last();
+    ModelPart& mdl = *loadingmd3->parts.last();
     if(!mdl.addemitter(tag, *type, *arg1, *arg2)) { conoutf("could not find tag %s", tag); return; }
 }
 

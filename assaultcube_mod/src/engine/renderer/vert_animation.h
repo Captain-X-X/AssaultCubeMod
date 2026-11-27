@@ -113,10 +113,10 @@ struct tag
     }
 };
 
-class part;
+class ModelPart;
 struct linkedpart
 {
-    part *p;
+    ModelPart* p;
     particleemitter *emitter;
     vec3_t *pos;
 
@@ -130,16 +130,16 @@ struct linkedpart
     }
 };
 
-struct model;
+class Model;
 struct modelattach
 {
     const char *tag, *name;
     vec3_t *pos;
-    model *m;
+    Model* pModel;
 
-    modelattach() : tag(NULL), name(NULL), pos(NULL), m(NULL) {}
-    modelattach(const char *tag, const char *name) : tag(tag), name(name), pos(NULL), m(NULL) {}
-    modelattach(const char *tag, vec3_t *pos) : tag(tag), name(NULL), pos(pos), m(NULL) {}
+    modelattach() : tag(NULL), name(NULL), pos(NULL), pModel(NULL) {}
+    modelattach(const char *tag, const char *name) : tag(tag), name(name), pos(NULL), pModel(NULL) {}
+    modelattach(const char *tag, vec3_t *pos) : tag(tag), name(NULL), pos(pos), pModel(NULL) {}
 };
 
 #endif

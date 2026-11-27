@@ -1,6 +1,6 @@
 #include "cube.h"
-#include "vert_mesh.h"
-#include "model.h"
+#include "Mesh3D.h"
+#include "Model.h"
 #include "maths/maths_func.h"
 #include "world_light.h"
 #include "shadow.h"
@@ -20,26 +20,21 @@ extern float modelyaw;
 extern float modelpitch;
 extern int animationinterpolationtime;
 
-mesh::mesh() 
+Mesh::Mesh() 
     : name(0), owner(0), skin(notexture), tex(0), statlist(0)
 {
 
 }
 
-mesh::~mesh()
+Mesh::~Mesh()
 {
     DELETEA(name);
-    //DELETEA(verts);
-    // DELETEA(tcverts);
-    // DELETEA(bbs);
-    // DELETEA(shareverts);
-    // DELETEA(tris);
-    if(statlist) glDeleteLists(statlist, 1);
-    // DELETEA(dynidx);
-    // DELETEA(dyndraws);
+    if(statlist) {
+        glDeleteLists(statlist, 1);
+    }
 }
 
-void mesh::genstrips()
+void Mesh::genstrips()
 {
     tristrip ts;
     ts.addtriangles(m_tris.data(), numtris);
@@ -55,7 +50,7 @@ void mesh::genstrips()
     // numdyndraws = draws.length();
 }
 
-dyncacheentry* mesh::gendynverts(animstate &as, anpos &cur, anpos *prev, float ai_t)
+dyncacheentry* Mesh::gendynverts(animstate &as, anpos &cur, anpos *prev, float ai_t)
 {
     dyncacheentry *d = dyncache.start();
     int cachelen = 0;
@@ -69,7 +64,7 @@ dyncacheentry* mesh::gendynverts(animstate &as, anpos &cur, anpos *prev, float a
         else if(d->prev.fr1 < 0) return d;
     }
 
-    d = model::dynalloc.allocate<dyncacheentry>((numverts + 1)*sizeof(vec3_t));
+    d = Model::dynalloc.allocate<dyncacheentry>((numverts + 1)*sizeof(vec3_t));
     if(!d) return NULL;
 
     if(cachelen >= owner->model->cachelimit) dyncache.removelast();
@@ -103,12 +98,12 @@ dyncacheentry* mesh::gendynverts(animstate &as, anpos &cur, anpos *prev, float a
     #undef ip_v
     #undef ip_v_ai
 
-    if(d->verts() == model::lastvertexarray) model::lastvertexarray = (void *)-1;
+    if(d->verts() == Model::lastvertexarray) Model::lastvertexarray = (void *)-1;
 
     return d;
 }
 
-void mesh::weldverts()
+void Mesh::weldverts()
 {
     hashtable<vec3_t, int> idxs;
     m_shareverts.resize(numverts);
@@ -123,7 +118,7 @@ void mesh::weldverts()
     }
 }
 
-void mesh::findneighbors()
+void Mesh::findneighbors()
 {
     hashtable<uint, uint> edges;
     loopi(numtris)
@@ -156,7 +151,7 @@ void mesh::findneighbors()
     }
 }
 
-void mesh::cleanup()
+void Mesh::cleanup()
 {
     if(statlist)
     {
@@ -165,7 +160,7 @@ void mesh::cleanup()
     }
 }
 
-shadowcacheentry* mesh::genshadowvolume(animstate &as, anpos &cur, anpos *prev, float ai_t, vec3_t *buf)
+shadowcacheentry* Mesh::genshadowvolume(animstate &as, anpos &cur, anpos *prev, float ai_t, vec3_t *buf)
 {
     if(m_shareverts.empty()) {
         return NULL;
@@ -187,7 +182,7 @@ shadowcacheentry* mesh::genshadowvolume(animstate &as, anpos &cur, anpos *prev, 
         }
     }
 
-    d = (owner->numframes > 1 || as.anim&ANIM_DYNALLOC ? model::dynalloc : model::statalloc).allocate<shadowcacheentry>(9*numtris*sizeof(ushort));
+    d = (owner->numframes > 1 || as.anim&ANIM_DYNALLOC ? Model::dynalloc : Model::statalloc).allocate<shadowcacheentry>(9*numtris*sizeof(ushort));
     if(!d) {
         return NULL;
     }
@@ -234,7 +229,7 @@ shadowcacheentry* mesh::genshadowvolume(animstate &as, anpos &cur, anpos *prev, 
     return d;
 }
 
-lightcacheentry* mesh::lightvertexes(animstate &as, anpos &cur, anpos *prev, float ai_t, vec3_t *buf)
+lightcacheentry* Mesh::lightvertexes(animstate &as, anpos &cur, anpos *prev, float ai_t, vec3_t *buf)
 {
     if(dbgvlight) return NULL;
 
@@ -255,7 +250,7 @@ lightcacheentry* mesh::lightvertexes(animstate &as, anpos &cur, anpos *prev, flo
     float dist = Maths::max(curbb.min.magnitude(), curbb.max.magnitude());
     if(OUTBORDRAD(modelpos.x, modelpos.y, dist)) return NULL;
 
-    d = (owner->numframes > 1 || as.anim&ANIM_DYNALLOC ? model::dynalloc : model::statalloc).allocate<lightcacheentry>(numverts*sizeof(lightvert));
+    d = (owner->numframes > 1 || as.anim&ANIM_DYNALLOC ? Model::dynalloc : Model::statalloc).allocate<lightcacheentry>(numverts*sizeof(LightVertex));
     if(!d) return NULL;
 
     if(cachelen >= owner->model->cachelimit) lightcache.removelast();
@@ -269,8 +264,8 @@ lightcacheentry* mesh::lightvertexes(animstate &as, anpos &cur, anpos *prev, flo
     if(prev) d->prev = *prev;
     else d->prev.fr1 = -1;
 
-    const mat4_t& m = model::matrixstack[model::matrixpos];
-    lightvert *v = d->verts();
+    const mat4_t& m = Model::matrixstack[Model::matrixpos];
+    LightVertex* v = d->verts();
     loopi(numverts)
     {
         int x = (int)m.transformx(*buf), y = (int)m.transformy(*buf);
@@ -282,11 +277,11 @@ lightcacheentry* mesh::lightvertexes(animstate &as, anpos &cur, anpos *prev, flo
         v++;
         buf++;
     }
-    if(d->verts() == model::lastcolorarray) model::lastcolorarray = (void *)-1;
+    if(d->verts() == Model::lastcolorarray) Model::lastcolorarray = (void *)-1;
     return d;
 }
 
-void mesh::getcurbb(aabb_s& b, animstate &as, anpos &cur, anpos *prev, float ai_t)
+void Mesh::getcurbb(aabb_s& b, animstate &as, anpos &cur, anpos *prev, float ai_t)
 {
     b = m_aabbs[cur.fr1];
     b.add(m_aabbs[cur.fr2]);
@@ -297,35 +292,35 @@ void mesh::getcurbb(aabb_s& b, animstate &as, anpos &cur, anpos *prev, float ai_
     }
 }
 
-void mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
+void Mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
 {
     if(!(as.anim&ANIM_NOSKIN))
     {
         GLuint id = tex < 0 ? -tex : skin->getId();
         if(tex > 0) id = g_TextureMgr.get(tex)->getId();
-        if(id != model::lasttex)
+        if(id != Model::lasttex)
         {
             glBindTexture(GL_TEXTURE_2D, id);
-            model::lasttex = id;
+            Model::lasttex = id;
         }
-        if(model::enablealphablend) { glDisable(GL_BLEND); model::enablealphablend = false; }
+        if(Model::enablealphablend) { glDisable(GL_BLEND); Model::enablealphablend = false; }
         if(skin->getBytesPerPixle() == 32 && owner->model->alphatest > 0)
         {
-            if(!model::enablealphatest) { glEnable(GL_ALPHA_TEST); model::enablealphatest = true; }
-            if(model::lastalphatest != owner->model->alphatest)
+            if(!Model::enablealphatest) { glEnable(GL_ALPHA_TEST); Model::enablealphatest = true; }
+            if(Model::lastalphatest != owner->model->alphatest)
             {
                 glAlphaFunc(GL_GREATER, owner->model->alphatest);
-                model::lastalphatest = owner->model->alphatest;
+                Model::lastalphatest = owner->model->alphatest;
             }
         }
-        else if(model::enablealphatest) { glDisable(GL_ALPHA_TEST); model::enablealphatest = false; }
-        if(!model::enabledepthmask) { glDepthMask(GL_TRUE); model::enabledepthmask = true; }
+        else if(Model::enablealphatest) { glDisable(GL_ALPHA_TEST); Model::enablealphatest = false; }
+        if(!Model::enabledepthmask) { glDepthMask(GL_TRUE); Model::enabledepthmask = true; }
     }
 
-    if(model::enableoffset)
+    if(Model::enableoffset)
     {
         disablepolygonoffset(GL_POLYGON_OFFSET_FILL);
-        model::enableoffset = false;
+        Model::enableoffset = false;
     }
 
     bool isstat = as.frame==0 && as.range==1;
@@ -340,7 +335,7 @@ void mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
         aabb_s curbb;
         getcurbb(curbb, as, cur, prev, ai_t);
         glmatrixf mat;
-        mat.mul(mvpmatrix, model::matrixstack[model::matrixpos]);
+        mat.mul(mvpmatrix, Model::matrixstack[Model::matrixpos]);
         if(!addshadowbox(curbb.min, curbb.max, shadowpos, mat)) return;
     }
 
@@ -352,28 +347,28 @@ void mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
         if(!d) return;
         buf = d->verts();
     }
-    if(model::lastvertexarray != buf)
+    if(Model::lastvertexarray != buf)
     {
-        if(!model::lastvertexarray) glEnableClientState(GL_VERTEX_ARRAY);
+        if(!Model::lastvertexarray) glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vec3_t), buf);
-        model::lastvertexarray = buf;
+        Model::lastvertexarray = buf;
     }
-    lightvert *vlight = NULL;
+    LightVertex* vlight = NULL;
     if(as.anim&ANIM_NOSKIN && (!isstat || stenciling))
     {
-        if(model::lasttexcoordarray)
+        if(Model::lasttexcoordarray)
         {
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            model::lasttexcoordarray = NULL;
+            Model::lasttexcoordarray = NULL;
         }
     }
     else
     {
-        if(model::lasttexcoordarray != m_uvs.data())
+        if(Model::lasttexcoordarray != m_uvs.data())
         {
-            if(!model::lasttexcoordarray) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glTexCoordPointer(2, GL_FLOAT, sizeof(tcvert), m_uvs.data());
-            model::lasttexcoordarray = m_uvs.data();
+            if(!Model::lasttexcoordarray) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexCoordPointer(2, GL_FLOAT, sizeof(Vector2), m_uvs.data());
+            Model::lasttexcoordarray = m_uvs.data();
         }
         if(owner->model->vertexlight)
         {
@@ -383,15 +378,15 @@ void mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
             if(l) vlight = l->verts();
         }
     }
-    if(model::lastcolorarray != vlight)
+    if(Model::lastcolorarray != vlight)
     {
         if(vlight)
         {
-            if(!model::lastcolorarray) glEnableClientState(GL_COLOR_ARRAY);
-            glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(lightvert), vlight);
+            if(!Model::lastcolorarray) glEnableClientState(GL_COLOR_ARRAY);
+            glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(LightVertex), vlight);
         }
         else glDisableClientState(GL_COLOR_ARRAY);
-        model::lastcolorarray = vlight;
+        Model::lastcolorarray = vlight;
     }
     if(stenciling)
     {
@@ -421,7 +416,7 @@ void mesh::render(animstate &as, anpos &cur, anpos *prev, float ai_t)
     xtraverts += static_cast<int>(m_dynidx.size());
 }
 
-int mesh::findvert(int axis, int dir)
+int Mesh::findvert(int axis, int dir)
 {
     if(axis<0 || axis>2) return -1;
     int vert = -1;
@@ -438,14 +433,14 @@ int mesh::findvert(int axis, int dir)
     return vert;
 }
 
-float mesh::calcradius()
+float Mesh::calcradius()
 {
     float rad = 0;
     loopi(numverts) rad = Maths::max(rad, m_verts[i].magnitudexy());
     return rad;
 }
 
-void mesh::calcneighbors()
+void Mesh::calcneighbors()
 {
     if(m_shareverts.empty()) {
         weldverts();
@@ -453,7 +448,7 @@ void mesh::calcneighbors()
     }
 }
 
-void mesh::calcbbs()
+void Mesh::calcbbs()
 {
     if(!m_aabbs.empty()) {
         return;

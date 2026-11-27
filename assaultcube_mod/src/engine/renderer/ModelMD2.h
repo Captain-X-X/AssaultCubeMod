@@ -1,7 +1,6 @@
-#ifndef CMEMD2MDL_H
-#define CMEMD2MDL_H
-#include "cube.h"
-#include "model.h"
+#ifndef MD2MDL_H
+#define MD2MDL_H
+#include "Model.h"
 
 struct modelattach;
 class dynent;
@@ -11,11 +10,11 @@ class dynent;
 * MD2 model loader
 * ==========
 */
-class md2 : public model 
+class ModelMD2 : public Model 
 {
 public:
-    md2(const char *name);
-    ~md2();
+    ModelMD2(const char *name);
+    ~ModelMD2();
 
     void rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, modelattach *a);
     bool load();

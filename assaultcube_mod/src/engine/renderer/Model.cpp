@@ -1,10 +1,14 @@
-#include "cube.h"
-#include "model.h"
+#include "pch.h"
+#include "Model.h"
 #include "vert_animation.h"
 #include "render_particles.h"
 #include "shadow.h"
 #include "render_cubes.h"
 #include "lib/glad/glad.h"
+
+// i wish there was a better api style to handle this for more client
+//  side things
+#include "client/client.h"
 
 VARP(dynshadowsize, 4, 5, 8);
 VARP(aadynshadow, 0, 2, 3);
@@ -19,107 +23,111 @@ vec3_t modelpos;
 float modelyaw, modelpitch;
 extern int animationinterpolationtime;
 
-part::part() : filename(NULL), anims(NULL), links(NULL), tags(NULL), numtags(0), shadows(NULL), shadowrad(0) {}
-part::~part()
+ModelPart::ModelPart() 
+    : filename(NULL), numtags(0), shadowrad(0) 
+{
+
+}
+ModelPart::~ModelPart()
 {
     DELETEA(filename);
-    meshes.deletecontents();
-    DELETEA(anims);
-    DELETEA(links);
-    DELETEA(tags);
-    if (shadows)
-        glDeleteTextures(numframes, shadows);
-    DELETEA(shadows);
+    // m_meshes.deletecontents();
+    for (size_t i = 0; i < m_meshes.size(); i++) {
+        if (m_meshes[i]) {
+            delete m_meshes[i];
+        }
+    }
+    // DELETEA(anims);
+    if (!m_shadows.empty()) {
+        glDeleteTextures(numframes, &m_shadows[0]);
+    }
+    // DELETEA(shadows);
 }
 
-void part::cleanup()
+void ModelPart::cleanup()
 {
-    loopv(meshes) meshes[i]->cleanup();
-    if (shadows)
-    {
-        glDeleteTextures(numframes, shadows);
-        DELETEA(shadows);
+    for (size_t i = 0; i < m_meshes.size(); i++) {
+        m_meshes[i]->cleanup();
+    }
+    if (!m_shadows.empty()) {
+        glDeleteTextures(numframes, &m_shadows[0]);
+        std::vector<GLuint> shads;
+        m_shadows.swap(shads);
     }
 }
 
-bool part::link(part *link, const char *tag, vec3_t *pos)
+bool ModelPart::link(ModelPart* pLink, const char *tag, vec3_t *pos)
 {
-    loopi(numtags) if (!strcmp(tags[i].name, tag))
-    {
-        links[i].p = link;
-        links[i].pos = pos;
-        return true;
+    for (int i = 0; i < numtags; i++) {
+        if (!strcmp(m_tags[i].name, tag)) {
+            m_links[i].p = pLink;
+            m_links[i].pos = pos;
+            return true;
+        }
     }
     return false;
 }
 
-bool part::gentag(const char *name, int *verts, int numverts, mesh *m)
+bool ModelPart::gentag(const char *name, int *verts, int numverts, Mesh* m)
 {
-    if (!m)
-    {
-        if (meshes.empty())
+    if (!m) {
+        if (m_meshes.empty()) {
             return false;
-        m = meshes[0];
+        }
+        m = m_meshes[0];
     }
-    if (numverts < 1)
+    if (numverts < 1) {
         return false;
-    loopi(numverts) if (verts[i] < 0 || verts[i] > m->numverts) return false;
+    }
+    for (int i = 0; i < numverts; i++) {
+        if (verts[i] < 0 || verts[i] > m->numverts) {
+            return false;
+        }
+    }
 
-    tag *ntags = new tag[(numtags + 1) * numframes];
-    ntags[numtags].name = newstring(name);
-    loopi(numframes)
-    {
-        // memcpy(&ntags[(numtags + 1) * i], &tags[numtags * i], numtags * sizeof(tag));
-
-        std::copy(
-            &tags[numtags * i],
-            &tags[numtags * i] + numtags,
-            &ntags[(numtags + 1) * i]
-        );
-
-        tag *t = &ntags[(numtags + 1) * i + numtags];
+    m_tags.resize((numtags + 1) * numframes);
+    m_tags[numtags].name = newstring(name);
+    for (int i = 0; i < numframes; i++) {
+        tag* t = &m_tags[(numtags + 1) * i + numtags];
         t->pos = m->m_verts[m->numverts * i + verts[0]];
-        if (numverts > 1)
-        {
-            for (int j = 1; j < numverts; j++)
+        if (numverts > 1) {
+            for (int j = 1; j < numverts; j++) {
                 t->pos.add(m->m_verts[m->numverts * i + verts[j]]);
+            }
             t->pos.div(numverts);
         }
         t->identity();
     }
-    loopi(numtags) tags[i].name = NULL;
-
-    DELETEA(tags);
-    tags = ntags;
+    for (int i = 0; i < numtags; i++) {
+        m_tags[i].name = NULL;
+    }
     numtags++;
 
-    linkedpart *nlinks = new linkedpart[numtags];
-    loopi(numtags - 1) swap(links[i].emitter, nlinks[i].emitter);
-    DELETEA(links);
-    links = nlinks;
+    m_links.resize(numtags);
     return true;
 }
 
-bool part::addemitter(const char *tag, int type, int arg1, int arg2)
+bool ModelPart::addemitter(const char *tag, int type, int arg1, int arg2)
 {
-    loopi(numtags) if (!strcmp(tags[i].name, tag))
-    {
-        if (!links[i].emitter)
-            links[i].emitter = new particleemitter;
-        particleemitter &p = *links[i].emitter;
-        p.type = type;
-        p.args[0] = arg1;
-        p.args[1] = arg2;
-        return true;
+    for (int i = 0; i < numtags; i++) {
+        if (!strcmp(m_tags[i].name, tag)) {
+            if (!m_links[i].emitter) {
+                m_links[i].emitter = new particleemitter;
+            }
+            particleemitter &p = *m_links[i].emitter;
+            p.type = type;
+            p.args[0] = arg1;
+            p.args[1] = arg2;
+            return true;
+        }
     }
     return false;
 }
 
-void part::scaleverts(const float scale, const vec3_t &translate)
+void ModelPart::scaleverts(const float scale, const vec3_t &translate)
 {
-    loopv(meshes)
-    {
-        mesh &m = *meshes[i];
+    for (size_t i = 0; i < m_meshes.size(); i++) {
+        Mesh& m = *m_meshes[i];
         loopj(numframes * m.numverts)
         {
             vec3_t &v = m.m_verts[j];
@@ -128,36 +136,37 @@ void part::scaleverts(const float scale, const vec3_t &translate)
             v.mul(scale);
         }
     }
-    loopi(numframes * numtags)
-    {
-        vec3_t &v = tags[i].pos;
+    for (int i = 0; i < (numframes * numtags); i++) {
+        vec3_t &v = m_tags[i].pos;
         if (!index)
             v.add(translate);
         v.mul(scale);
     }
 }
 
-void part::genstrips()
+void ModelPart::genstrips()
 {
-    loopv(meshes) meshes[i]->genstrips();
+    for (size_t i = 0; i < m_meshes.size(); i++) {
+        m_meshes[i]->genstrips();
+    }
 }
 
-void part::getdefaultanim(animstate &as, int anim, int varseed)
+void ModelPart::getdefaultanim(animstate &as, int anim, int varseed)
 {
     as.frame = 0;
     as.range = 1;
 }
 
-void part::gentagmatrix(anpos &cur, anpos *prev, float ai_t, int i, GLfloat *matrix)
+void ModelPart::gentagmatrix(anpos &cur, anpos *prev, float ai_t, int i, GLfloat *matrix)
 {
-    tag *tag1 = &tags[cur.fr1 * numtags + i];
-    tag *tag2 = &tags[cur.fr2 * numtags + i];
+    tag *tag1 = &m_tags[cur.fr1 * numtags + i];
+    tag *tag2 = &m_tags[cur.fr2 * numtags + i];
 #define ip(p1, p2, t) (p1 + t * (p2 - p1))
 #define ip_ai_tag(c) ip(ip(tag1p->c, tag2p->c, prev->t), ip(tag1->c, tag2->c, cur.t), ai_t)
     if (prev)
     {
-        tag *tag1p = &tags[prev->fr1 * numtags + i];
-        tag *tag2p = &tags[prev->fr2 * numtags + i];
+        tag *tag1p = &m_tags[prev->fr1 * numtags + i];
+        tag *tag2p = &m_tags[prev->fr2 * numtags + i];
         loopj(3) matrix[j] = ip_ai_tag(transform[0][j]); // transform
         loopj(3) matrix[4 + j] = ip_ai_tag(transform[1][j]);
         loopj(3) matrix[8 + j] = ip_ai_tag(transform[2][j]);
@@ -176,7 +185,7 @@ void part::gentagmatrix(anpos &cur, anpos *prev, float ai_t, int i, GLfloat *mat
     matrix[15] = 1.0f;
 }
 
-bool part::calcanimstate(int anim, int varseed, float speed, int basetime, dynent *d, animstate &as)
+bool ModelPart::calcanimstate(int anim, int varseed, float speed, int basetime, dynent *d, animstate &as)
 {
     as.anim = anim;
     as.speed = speed <= 0 ? 100.0f : speed;
@@ -186,12 +195,10 @@ bool part::calcanimstate(int anim, int varseed, float speed, int basetime, dynen
         as.frame = 0;
         as.range = numframes;
     }
-    else if (anims)
-    {
-        vector<animinfo> &ais = anims[anim & ANIM_INDEX];
-        if (ais.length())
-        {
-            animinfo &ai = ais[uint(varseed) % ais.length()];
+    else if (!m_anims.empty()) {
+        std::vector<animinfo>& ais = m_anims[anim & ANIM_INDEX];
+        if (ais.size()) {
+            animinfo& ai = ais[uint(varseed) % ais.size()];
             as.frame = ai.frame;
             as.range = ai.range;
             if (ai.speed > 0)
@@ -235,15 +242,15 @@ bool part::calcanimstate(int anim, int varseed, float speed, int basetime, dynen
     return true;
 }
 
-void part::render(int anim, int varseed, float speed, int basetime, dynent *d)
+void ModelPart::render(int anim, int varseed, float speed, int basetime, dynent *d)
 {
-    if (meshes.empty())
+    if (m_meshes.empty())
         return;
     animstate as;
     if (!calcanimstate(anim, varseed, speed, basetime, d, as))
         return;
 
-    if (meshes[0]->m_dynidx.empty())
+    if (m_meshes[0]->m_dynidx.empty())
         genstrips();
 
     anpos prev, cur;
@@ -258,13 +265,14 @@ void part::render(int anim, int varseed, float speed, int basetime, dynent *d)
     }
 
     glPushMatrix();
-    glMultMatrixf(model::matrixstack[model::matrixpos].v);
-    loopv(meshes) meshes[i]->render(as, cur, doai ? &prev : NULL, ai_t);
+    glMultMatrixf(Model::matrixstack[Model::matrixpos].v);
+    for (size_t i = 0; i < m_meshes.size(); i++) { 
+        m_meshes[i]->render(as, cur, doai ? &prev : NULL, ai_t);
+    }
     glPopMatrix();
 
-    loopi(numtags)
-    {
-        linkedpart &link = links[i];
+    for (int i = 0; i < numtags; i++) {
+        linkedpart& link = m_links[i];
         if (!(link.p || link.pos || (anim & ANIM_PARTICLE && link.emitter)))
             continue;
 
@@ -272,11 +280,11 @@ void part::render(int anim, int varseed, float speed, int basetime, dynent *d)
         mat4_t linkmat;
         gentagmatrix(cur, doai ? &prev : NULL, ai_t, i, linkmat.v);
 
-        model::matrixpos++;
-        model::matrixstack[model::matrixpos].mul(model::matrixstack[model::matrixpos - 1], linkmat);
+        Model::matrixpos++;
+        Model::matrixstack[Model::matrixpos].mul(Model::matrixstack[Model::matrixpos - 1], linkmat);
 
         if (link.pos)
-            *link.pos = model::matrixstack[model::matrixpos].gettranslation();
+            *link.pos = Model::matrixstack[Model::matrixpos].gettranslation();
 
         if (link.p)
         {
@@ -309,37 +317,40 @@ void part::render(int anim, int varseed, float speed, int basetime, dynent *d)
                 p.lastemit = basetime;
             }
 
-            particle_emit(p.type, p.args, basetime, p.seed, model::matrixstack[model::matrixpos].gettranslation());
+            particle_emit(p.type, p.args, basetime, p.seed, Model::matrixstack[Model::matrixpos].gettranslation());
         }
 
-        model::matrixpos--;
+        Model::matrixpos--;
     }
 }
 
-void part::setanim(int num, int frame, int range, float speed)
+void ModelPart::setanim(int num, int frame, int range, float speed)
 {
     if (frame < 0 || frame >= numframes || range <= 0 || frame + range > numframes)
     {
         conoutf("invalid frame %d, range %d in model %s", frame, range, model->loadname);
         return;
     }
-    if (!anims)
-        anims = new vector<animinfo>[NUMANIMS];
-    animinfo &ai = anims[num].add();
+    if (m_anims.empty()) {
+        // anims = new vector<animinfo>[NUMANIMS];
+        m_anims.resize(NUMANIMS);
+    }
+    animinfo ai;// = m_anims[num].add();
     ai.frame = frame;
     ai.range = range;
     ai.speed = speed;
+    m_anims[num].push_back(ai);
 }
 
-void part::begingenshadow()
+void ModelPart::begingenshadow()
 {
 }
 
-void part::endgenshadow()
+void ModelPart::endgenshadow()
 {
 }
 
-void part::blurshadow(const uchar *in, uchar *out, uint size)
+void ModelPart::blurshadow(const uchar *in, uchar *out, uint size)
 {
     static const uint filter3x3[9] =
         {
@@ -383,7 +394,7 @@ void part::blurshadow(const uchar *in, uchar *out, uint size)
 #undef FILTER
 }
 
-void part::genshadow(int aasize, int frame, stream *f)
+void ModelPart::genshadow(int aasize, int frame, stream *f)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -394,14 +405,7 @@ void part::genshadow(int aasize, int frame, stream *f)
     uchar *pixels = new uchar[2 * aasize * aasize];
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadPixels(0, 0, aasize, aasize, GL_RED, GL_UNSIGNED_BYTE, pixels);
-#if 0
-    SDL_Surface *img = SDL_CreateRGBSurface(SDL_SWSURFACE, aasize, aasize, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
-    loopi(aasize*aasize) memset((uchar *)img->pixels + 3*i, pixels[i], 3);
-    defformatstring(imgname)("%s_%d.bmp", model->loadname, frame);
-    for(char *s; (s = strchr(imgname, '/'));) *s = '_';
-    SDL_SaveBMP(img, imgname);
-    SDL_FreeSurface(img);
-#endif
+
     if (aasize > 1 << dynshadowsize)
         scaletexture(pixels, aasize, aasize, 1, pixels, 1 << dynshadowsize, 1 << dynshadowsize);
 
@@ -409,33 +413,35 @@ void part::genshadow(int aasize, int frame, stream *f)
     blurshadow(pixels, &pixels[texsize * texsize], texsize);
     if (f)
         f->write(&pixels[texsize * texsize], texsize * texsize);
-    createtexture(shadows[frame], texsize, texsize, &pixels[texsize * texsize], 3, true, false, GL_ALPHA);
+    createtexture(m_shadows[frame], texsize, texsize, &pixels[texsize * texsize], 3, true, false, GL_ALPHA);
 
     delete[] pixels;
 }
 
-void part::genshadows(float height, float rad)
+void ModelPart::genshadows(float height, float rad)
 {
-    if (shadows)
+    if (!m_shadows.empty()) {
         return;
+    }
 
     char *filename = shadowfile();
     if (filename && loadshadows(filename))
         return;
 
     shadowrad = rad;
-    shadows = new GLuint[numframes];
-    glGenTextures(numframes, shadows);
+            
+    m_shadows.resize(numframes);
+    glGenTextures(numframes, &m_shadows[0]);
 
-    extern SDL_Surface *screen;
+    SDL_Surface* pScreen = g_client.window.getSDLSurface();
     int aasize = 1 << (dynshadowsize + aadynshadow);
-    while (aasize > screen->w || aasize > screen->h)
+    while (aasize > pScreen->w || aasize > pScreen->h) {
         aasize /= 2;
+    }
 
     stream *f = filename ? opengzfile(filename, "wb") : NULL;
-    if (f)
-    {
-        shadowheader hdr;
+    if (f) {
+        ShadowHeader hdr;
         hdr.size = Maths::min(aasize, 1 << dynshadowsize);
         hdr.frames = numframes;
         hdr.height = height;
@@ -471,14 +477,13 @@ void part::genshadows(float height, float rad)
         delete f;
 }
 
-bool part::loadshadows(const char *filename)
+bool ModelPart::loadshadows(const char *filename)
 {
     stream *f = opengzfile(filename, "rb");
     if (!f)
         return false;
-    shadowheader hdr;
-    if (f->read(&hdr, sizeof(shadowheader)) != sizeof(shadowheader))
-    {
+    ShadowHeader hdr;
+    if (f->read(&hdr, sizeof(ShadowHeader)) != sizeof(ShadowHeader)) {
         delete f;
         return false;
     }
@@ -501,10 +506,10 @@ bool part::loadshadows(const char *filename)
     }
 
     shadowrad = hdr.rad;
-    shadows = new GLuint[hdr.frames];
-    glGenTextures(hdr.frames, shadows);
+    m_shadows.resize(hdr.frames);
+    glGenTextures(hdr.frames, &m_shadows[0]);
 
-    loopi(hdr.frames) createtexture(shadows[i], hdr.size, hdr.size, &buf[i * hdr.size * hdr.size], 3, true, false, GL_ALPHA);
+    loopi(hdr.frames) createtexture(m_shadows[i], hdr.size, hdr.size, &buf[i * hdr.size * hdr.size], 3, true, false, GL_ALPHA);
 
     delete[] buf;
     delete f;
@@ -512,38 +517,39 @@ bool part::loadshadows(const char *filename)
     return true;
 }
 
-void part::rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw)
+void ModelPart::rendershadow(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw)
 {
-    if (!shadows)
+    if (m_shadows.empty()) {
         return;
+    }
     animstate as;
     if (!calcanimstate(anim, varseed, speed, basetime, NULL, as))
         return;
     anpos cur;
     cur.setframes(as);
 
-    GLuint id = shadows[cur.fr1];
-    if (id != model::lasttex)
+    GLuint id = m_shadows[cur.fr1];
+    if (id != Model::lasttex)
     {
         glBindTexture(GL_TEXTURE_2D, id);
-        model::lasttex = id;
+        Model::lasttex = id;
     }
 
-    if (model::enabledepthmask)
+    if (Model::enabledepthmask)
     {
         glDepthMask(GL_FALSE);
-        model::enabledepthmask = false;
+        Model::enabledepthmask = false;
     }
-    if (model::enablealphatest)
+    if (Model::enablealphatest)
     {
         glDisable(GL_ALPHA_TEST);
-        model::enablealphatest = false;
+        Model::enablealphatest = false;
     }
-    if (!model::enablealphablend)
+    if (!Model::enablealphablend)
     {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        model::enablealphablend = true;
+        Model::enablealphablend = true;
     }
 
     yaw *= RAD;
@@ -567,20 +573,20 @@ void part::rendershadow(int anim, int varseed, float speed, int basetime, const 
         return;
     }
 
-    if (!model::enableoffset)
+    if (!Model::enableoffset)
     {
         enablepolygonoffset(GL_POLYGON_OFFSET_FILL);
-        model::enableoffset = true;
+        Model::enableoffset = true;
     }
-    if (model::lastvertexarray)
+    if (Model::lastvertexarray)
     {
         glDisableClientState(GL_VERTEX_ARRAY);
-        model::lastvertexarray = NULL;
+        Model::lastvertexarray = NULL;
     }
-    if (model::lasttexcoordarray)
+    if (Model::lasttexcoordarray)
     {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        model::lasttexcoordarray = NULL;
+        Model::lasttexcoordarray = NULL;
     }
 
     vec3_t texgenS, texgenT;
@@ -595,7 +601,7 @@ void part::rendershadow(int anim, int varseed, float speed, int basetime, const 
     ::rendershadow(int(floor(o.x - shadowrad)), int(floor(o.y - shadowrad)), int(ceil(o.x + shadowrad)), int(ceil(o.y + shadowrad)), texgenS, texgenT);
 }
 
-char *part::shadowfile()
+char *ModelPart::shadowfile()
 {
     if (!saveshadows || !filename)
         return NULL;
@@ -610,30 +616,36 @@ char *part::shadowfile()
     return s;
 }
 
-float part::calcradius()
+float ModelPart::calcradius()
 {
     float rad = 0;
-    loopv(meshes) rad = Maths::max(rad, meshes[i]->calcradius());
+    for (size_t i = 0; i < m_meshes.size(); i++) {
+        rad = Maths::max(rad, m_meshes[i]->calcradius());
+    }
     return rad;
 }
 
-void part::calcneighbors()
+void ModelPart::calcneighbors()
 {
-    loopv(meshes) meshes[i]->calcneighbors();
+    for (size_t i = 0; i < m_meshes.size(); i++) {
+        m_meshes[i]->calcneighbors();
+    }
 }
 
-void part::calcbbs()
+void ModelPart::calcbbs()
 {
-    loopv(meshes) meshes[i]->calcbbs();
+    for (size_t i = 0; i < m_meshes.size(); i++) {
+        m_meshes[i]->calcbbs();
+    }
 }
 
 //////////////////////////////////////////////////////////////////
-model::model()
+Model::Model()
 {
 
 }
 
-model::model(const char *name, ModelTypes_t mtype) 
+Model::Model(const char *name, ModelTypes_t mtype) 
     : cullface(true), vertexlight(false),  alphablend(false), alphatest(0.9f), translucency(0.25f), scale(1), 
         radius(0), shadowdist(0), translate(0, 0, 0), cachelimit(8), batch(-1), loaded(false)
 {
@@ -641,18 +653,18 @@ model::model(const char *name, ModelTypes_t mtype)
     loadname = newstring(name);
 }
 
-model::~model()
+Model::~Model()
 {
     delete[] loadname;
     parts.deletecontents();
 }
 
-char *model::name() 
+char *Model::name() 
 { 
     return loadname; 
 }
 
-void model::render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a, float scale)
+void Model::render(int anim, int varseed, float speed, int basetime, const vec3_t &o, float yaw, float pitch, dynent *d, modelattach *a, float scale)
 {
     if (m_type == ModelTypes_t::NONE) {
         return;
@@ -698,7 +710,7 @@ void model::render(int anim, int varseed, float speed, int basetime, const vec3_
         {
             if(a[i].pos) link(NULL, a[i].tag, NULL);
 
-            model *m = (model *)a[i].m;
+            Model* m = (Model*)a[i].pModel;
             if(!m) continue;
             m->parts[0]->index = parts.length()+i;
             m->setskin();
@@ -710,13 +722,13 @@ void model::render(int anim, int varseed, float speed, int basetime, const vec3_
     else if (m_type == ModelTypes_t::MDL_MD3) {
         if(a) {
             for(int i = 0; a[i].tag; i++) {
-                model *m = (model *)a[i].m;
+                Model* m = (Model*)a[i].pModel;
                 if(!m)
                 {
                     if(a[i].pos) link(NULL, a[i].tag);
                     continue;
                 }
-                part *p = m->parts[0];
+                ModelPart* p = m->parts[0];
                 if(link(p, a[i].tag, a[i].pos)) p->index = parts.length()+i;
             }
         }
@@ -758,54 +770,54 @@ void model::render(int anim, int varseed, float speed, int basetime, const vec3_
     }
 }
 
-void model::cleanup()
+void Model::cleanup()
 {
     loopv(parts) parts[i]->cleanup();
 }
 
-bool model::link(part *link, const char *tag, vec3_t *pos)
+bool Model::link(ModelPart* pLink, const char *tag, vec3_t *pos)
 {
-    loopv(parts) if (parts[i]->link(link, tag, pos)) return true;
+    loopv(parts) if (parts[i]->link(pLink, tag, pos)) return true;
     return false;
 }
 
-void model::setskin(int tex)
+void Model::setskin(int tex)
 {
-    // if(parts.length()!=1 || parts[0]->meshes.length()!=1) return;
-    if (parts.length() < 1 || parts[0]->meshes.length() < 1)
+    // if(parts.length()!=1 || parts[0]->m_meshes.size()!=1) return;
+    if (parts.length() < 1 || parts[0]->m_meshes.size() < 1)
         return;
-    mesh &m = *parts[0]->meshes[0];
+    Mesh& m = *parts[0]->m_meshes[0];
     m.tex = tex;
 }
 
-void model::genshadows(float height, float rad)
+void Model::genshadows(float height, float rad)
 {
     if (parts.length() > 1)
         return;
     parts[0]->genshadows(height, rad);
 }
 
-bool model::hasshadows()
+bool Model::hasshadows()
 {
-    return parts.length() == 1 && parts[0]->shadows;
+    return parts.length() == 1 && parts[0]->m_shadows.empty() == false;
 }
 
-float model::calcradius()
+float Model::calcradius()
 {
     return parts.empty() ? 0.0f : parts[0]->calcradius();
 }
 
-void model::calcneighbors()
+void Model::calcneighbors()
 {
     loopv(parts) parts[i]->calcneighbors();
 }
 
-void model::calcbbs()
+void Model::calcbbs()
 {
     loopv(parts) parts[i]->calcbbs();
 }
 
-void model::startrender()
+void Model::startrender()
 {
     enablealphablend = enablealphatest = enableoffset = false;
     enabledepthmask = true;
@@ -814,7 +826,7 @@ void model::startrender()
     lastvertexarray = lasttexcoordarray = lastcolorarray = NULL;
 }
 
-void model::endrender()
+void Model::endrender()
 {
     if (enablealphablend)
         glDisable(GL_BLEND);
@@ -832,14 +844,14 @@ void model::endrender()
         disablepolygonoffset(GL_POLYGON_OFFSET_FILL);
 }
 
-bool model::enablealphablend = false, model::enablealphatest = false, model::enabledepthmask = true, model::enableoffset = false;
-GLuint model::lasttex = 0;
-float model::lastalphatest = -1;
-void *model::lastvertexarray = NULL, *model::lasttexcoordarray = NULL, *model::lastcolorarray = NULL;
-mat4_t model::matrixstack[32];
-int model::matrixpos = 0;
+bool Model::enablealphablend = false, Model::enablealphatest = false, Model::enabledepthmask = true, Model::enableoffset = false;
+GLuint Model::lasttex = 0;
+float Model::lastalphatest = -1;
+void *Model::lastvertexarray = NULL, *Model::lasttexcoordarray = NULL, *Model::lastcolorarray = NULL;
+mat4_t Model::matrixstack[32];
+int Model::matrixpos = 0;
 
-VARF(mdldyncache, 1, 2, 32, model::dynalloc.resize(mdldyncache << 20));
-VARF(mdlstatcache, 1, 1, 32, model::statalloc.resize(mdlstatcache << 20));
+VARF(mdldyncache, 1, 2, 32, Model::dynalloc.resize(mdldyncache << 20));
+VARF(mdlstatcache, 1, 1, 32, Model::statalloc.resize(mdlstatcache << 20));
 
-modelcache model::dynalloc(mdldyncache << 20), model::statalloc(mdlstatcache << 20);
+ModelCache Model::dynalloc(mdldyncache << 20), Model::statalloc(mdlstatcache << 20);

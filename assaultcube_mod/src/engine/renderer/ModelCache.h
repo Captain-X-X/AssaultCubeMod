@@ -3,15 +3,21 @@
 #include "cube.h"
 
 template<class T> 
-struct modelcacheentry
+class ModelCacheEntry
 {
-    typedef modelcacheentry<T> entry;
+public:
+    typedef ModelCacheEntry<T> entry;
 
     T *prev, *next, *nextalloc;
     size_t size;
     bool locked;
 
-    modelcacheentry(T *prev = NULL, T *next = NULL) : prev(prev), next(next), nextalloc(NULL), size(0), locked(false) {}
+public:
+    ModelCacheEntry(T *prev = NULL, T *next = NULL) 
+        : prev(prev), next(next), nextalloc(NULL), size(0), locked(false) 
+    {
+        
+    }
 
     bool empty() const
     {
@@ -36,8 +42,8 @@ struct modelcacheentry
 
     void unlink()
     {
-        prev->modelcacheentry<T>::next = next;
-        next->modelcacheentry<T>::prev = prev;
+        prev->ModelCacheEntry<T>::next = next;
+        next->ModelCacheEntry<T>::prev = prev;
         prev = next = (T *)this;
     }
 
@@ -48,11 +54,17 @@ struct modelcacheentry
 };
 
 template<class T> 
-struct modelcachelist : modelcacheentry<T>
+class ModelCacheList : public ModelCacheEntry<T>
 {
-    typedef modelcacheentry<T> entry;
+public:
+    typedef ModelCacheEntry<T> entry;
 
-    modelcachelist() : entry((T *)this, (T *)this) {}
+public:
+    ModelCacheList() 
+        : entry((T*)this, (T *)this) 
+    {
+
+    }
 
     T *start() { return entry::next; }
     T *end() { return (T *)this; }
@@ -78,16 +90,18 @@ struct modelcachelist : modelcacheentry<T>
     }
 };
 
-struct modelcache
+class ModelCache
 {
-    struct entry : modelcacheentry<entry> {};
+public:
+    struct entry : ModelCacheEntry<entry> {};
 
     uchar *buf;
     size_t size;
     entry *curalloc;
 
-    modelcache(size_t size = 0);
-    ~modelcache();
+public:
+    ModelCache(size_t size = 0);
+    ~ModelCache();
 
     void resize(size_t nsize);
 
@@ -141,7 +155,7 @@ struct modelcache
     }
 
     template<class T>
-    void release(modelcacheentry<T> *e)
+    void release(ModelCacheEntry<T> *e)
     {
         e->unlink();
     }

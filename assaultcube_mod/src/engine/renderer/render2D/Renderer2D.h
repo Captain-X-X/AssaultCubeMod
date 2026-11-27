@@ -26,12 +26,12 @@
 * 
 * ==========
 */
-enum class RenderCommand2DTypes_t : unsigned int 
-{
+enum class RenderCommand2DTypes_t : unsigned int {
     DRAW_INDEXED,
     DRAW_ARRAYS,
     DRAW_INSTANCED
 };
+
 struct RenderCommand2D
 {
     // draw type
@@ -78,6 +78,12 @@ public:
     void begin();
     void submitSprite(Sprite& sprite, const Transform& transform);
     void submitSpriteStatic(Sprite& sprite, const Transform& transform);
+
+    // theese start with a capital letter as im unsure if they will stay as methods.
+    //  maybe there should be some type of renderer interface that handles immediate style rendering functions.
+    void SubmitRectCMD(float x, float y, float w, float h, const Vector4& tint, Material* pmat);
+    void SubmitRectRotatedCMD(float x, float y, float w, float h, float rot, const Vector4& tint, Material* pmat);
+
     void end();
     void flush();
 
